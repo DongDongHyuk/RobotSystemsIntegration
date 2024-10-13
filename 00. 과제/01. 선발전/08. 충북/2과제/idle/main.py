@@ -12,6 +12,12 @@ def exc(m,s,e,li=[]):
     return [''.join(m),info]
     
 def aro(pos):
+    if t == 0:
+        di = {7:[2,6,8,11,13,17],
+        11:[6,7,10,13,16,17],12:[],13:[7,8,11,14,17,18],
+        17:[7,11,13,16,18,22]}
+        if pos in di:
+            return di[pos]
     if pos in cache:
         return cache[pos]
     res = []
@@ -92,7 +98,8 @@ def main(g_t,m,*a):
     cache = {}      # cache reset
     if t == 0:
         leaf = '1x0x23000450006700089x0xa'
-        for i in [0,4,20,24,5,9,15,19,10,14]:
+        fix = [2,22]
+        for i in [0,24,4,20,5,19,15,9,10,14]:
             m = sort(m,leaf,i,leaf[i])
     if t == 1:
         leaf = list('1234567800000000')
@@ -137,9 +144,9 @@ def main(g_t,m,*a):
 
 if __name__ == '__main__':
 
-    t,m = 0,'5x0x3400089000a600012x0x7'         # fix: 충북2 A 홀 규칙 적용
-    t,m = 1,'0000050087x16342'
-    t,m1,m2,leaf = 2,'10300x0402000005','000042x513000000','000000x050004321'
+    t,m = 0,'5x0x3400089000a600012x0x7'
+    # t,m = 1,'0000050087x16342'
+    # t,m1,m2,leaf = 2,'10300x0402000005','000042x513000000','000000x050004321'
         
     ts = time()    
     res = main(t,m) if t < 2 else main(t,m1,m2,leaf)
