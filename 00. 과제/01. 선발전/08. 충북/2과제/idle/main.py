@@ -63,14 +63,13 @@ def bfs(n,m,*a):
     
 def sort(m,leaf,pos,pack):
     global fix
-    
     hold = []
+
     if len(exp(0,m,pos)) == 1:
         m = bfs(1,m,leaf,pos,'0')
         hold.append(pos)
 
     r = bfs(0,m,m.index(pack),pos)
-
     fix += hold
 
     for i in r:
@@ -83,7 +82,7 @@ def sort(m,leaf,pos,pack):
 def main(g_t,m,*a):    
     global t,sy,sx,size,fix,res,cache
     t = g_t
-    sy,sx = [[5,5],[0,0],[0,0]][t]
+    sy,sx = [[5,5],[4,4],[0,0]][t]
     size = sy * sx
     fix = []
     res = []
@@ -94,7 +93,12 @@ def main(g_t,m,*a):
         for i in li:
             m = sort(m,leaf,i,leaf[i])
     if t == 1:
-        pass
+        leaf = list('1234567800000000')
+        leaf[m.index('x')] = 'x'
+        leaf = ''.join(leaf)
+        li = [1,2,0,3,5,6,4,7]
+        for i in li:
+            m = sort(m,leaf,i,leaf[i])
     if t == 2:
         pass
     return res
@@ -102,6 +106,7 @@ def main(g_t,m,*a):
 if __name__ == '__main__':
 
     t,m = 0,'5x0x3400089000a600012x0x7'
+    t,m = 1,'0000050087x16342'
         
     ts = time()    
     res = main(t,m)    
@@ -109,3 +114,4 @@ if __name__ == '__main__':
     print(res)
     print("{}step, idle {}s(dart {}m {}s) \n".
     format(len(res),round(te,3),int((te*250)//60),int((te*250)%60)))
+

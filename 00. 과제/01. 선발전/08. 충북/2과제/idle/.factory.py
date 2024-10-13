@@ -2,12 +2,12 @@ from rdm import rdm
 from time import time
 from main import main
 
-t = 0 # <- map Type
+t = 1 # <- map Type
 loop_limit = 10000
 
 ct,SUM_step,SUM_time,MAX_time = 0,0,0,0
 def print_case():
-    if t == 0:
+    if t < 2:
         print("[{}] | {},'{}'".format(ct,t,m))
 def print_info():
     if ct:
@@ -18,11 +18,11 @@ def print_info():
         print('Maximum Time : {}s(dart {}m {}s)'.
               format(round(MAX_time,6), int((MAX_time*250)//60), int((MAX_time*250)%60)))    
 while 1:
-    if t == 0:
+    if t < 2:
         m, = rdm(t)
     ts = time()
     try:
-        if t == 0:
+        if t < 2:
             res = main(t,m)
     except:
         print('Failed Sorting')
