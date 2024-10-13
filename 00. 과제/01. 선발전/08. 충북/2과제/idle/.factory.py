@@ -2,13 +2,16 @@ from rdm import rdm
 from time import time
 from main import main
 
-t = 1 # <- map Type
+t = 2 # <- map Type
 loop_limit = 10000
 
 ct,SUM_step,SUM_time,MAX_time = 0,0,0,0
 def print_case():
     if t < 2:
         print("[{}] | {},'{}'".format(ct,t,m))
+    else:
+        print("[{}] | {},'{}','{}','{}'".format(ct,t,m1,m2,leaf))
+
 def print_info():
     if ct:
         AVG_step,AVG_time = SUM_step // ct,SUM_time / ct        
@@ -20,10 +23,14 @@ def print_info():
 while 1:
     if t < 2:
         m, = rdm(t)
+    else:
+        m1,m2,leaf = rdm(t)
     ts = time()
     try:
         if t < 2:
             res = main(t,m)
+        else:
+            res = main(t,m1,m2,leaf)
     except:
         print('Failed Sorting')
         print_case()
