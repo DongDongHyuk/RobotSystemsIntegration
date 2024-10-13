@@ -5,7 +5,8 @@ from printer import printf
 def exc(m,s,e):
     m = list(m)
     m[s],m[e] = m[e],m[s]
-    info = [[e,s],int(m[s])]
+    pack = 10 if m[s] == 'a' else int(m[s])
+    info = [[e,s],pack]
     return [''.join(m),info]
     
 def aro(pos):
@@ -61,8 +62,20 @@ def bfs(n,m,*a):
     return path[::-1][1:]
     
 def sort(m,leaf,pos,pack):
+    global fix
+    
+    hold = []
+    if len(exp(0,m,pos)) == 1:
+        m = bfs(1,m,leaf,pos,'0')
+        hold.append(pos)
+
     r = bfs(0,m,m.index(pack),pos)
+
+    fix += hold
+
     for i in r:
+        if i in hold:
+            fix.remove(i)
         m = bfs(1,m,leaf,i,pack)
     fix.append(pos)
     return m
@@ -70,13 +83,16 @@ def sort(m,leaf,pos,pack):
 def main(g_t,m,*a):    
     global t,sy,sx,size,fix,res,cache
     t = g_t
-    sy,sx = [[0,0],[0,0],[0,0]][t]
+    sy,sx = [[5,5],[0,0],[0,0]][t]
     size = sy * sx
     fix = []
     res = []
     cache = {}      # cache reset
     if t == 0:
-        pass
+        leaf = '1x0x23000450006700089x0xa'
+        li = [0,4,20,24,5,9,15,19,10,14]
+        for i in li:
+            m = sort(m,leaf,i,leaf[i])
     if t == 1:
         pass
     if t == 2:
@@ -85,10 +101,10 @@ def main(g_t,m,*a):
 
 if __name__ == '__main__':
 
-    t,m,leaf = 0,'',''
+    t,m = 0,'5x0x3400089000a600012x0x7'
         
     ts = time()    
-    res = main(t,m,leaf)    
+    res = main(t,m)    
     te = time() - ts
     print(res)
     print("{}step, idle {}s(dart {}m {}s) \n".
