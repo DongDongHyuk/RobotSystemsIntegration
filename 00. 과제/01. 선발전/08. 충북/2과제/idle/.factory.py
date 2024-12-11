@@ -2,7 +2,7 @@ from rdm import rdm
 from time import time
 from main import main
 
-t = 0 # <- map Type
+t = 2 # <- map Type
 loop_limit = 10000
 
 ct,SUM_step,SUM_time,MAX_time = 0,0,0,0
