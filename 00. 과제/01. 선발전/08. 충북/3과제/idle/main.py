@@ -27,7 +27,7 @@ def exp(n,m,p=-1):
             if t == 0 and n > 0 and j in hli:
                 for k,v in bfs(-99,m,j).items():
                     if k not in li + hli + [i,j]:
-                        di[k] = v[::-1] + [j,i]
+                        di[k] = v[::-1] + [j,i]            
         li += list(di)
         for j in li:
             if m[j] in ('0x' if n > 0 else 'x') or j in fix:
@@ -37,8 +37,10 @@ def exp(n,m,p=-1):
 
 def bfs(n,m,*a):
     global res
-    if n < 0:
+    if n == -99:
         s, = a
+    if n == -1:
+        s,li = a
     if n == 0:
         s,e = a
     if n == 1:
@@ -50,7 +52,7 @@ def bfs(n,m,*a):
         if n == -99 and not q:        # 홀 처리
             return mkd
         cur = q.pop(0)
-        if n == -1 and m[cur] != '0':
+        if n == -1 and m[cur] not in ['0'] + li:
             break
         if n == 0 and cur == e:
             break
@@ -60,7 +62,7 @@ def bfs(n,m,*a):
         for i,j in exp(n,cur if n > 0 else m,cur):
             if i not in mkd:
                 q.append(i)
-                mkd[i] = mkd[cur] + [i]
+                mkd[i] = mkd[cur] + [j]
     path = mkd[cur]
     if n > 0:
         res += path
@@ -68,46 +70,93 @@ def bfs(n,m,*a):
     return path
     
 def sort(m,p,pk):
-    r = bfs(0,m,m.index(pk),p)
-    for i in r:
-        m = bfs(1,m,-1,i,pk)
+    if m[p] != pk:
+        b = len(exp(0,m,p)) == 1
+        if b:
+            m = bfs(1,m,-1,p,'0')
+        r = bfs(0,m,m.index(pk),p)
+        if b:
+            fix.append(p)
+        for i in r:
+            if i in hli:
+                continue
+            if i in fix:
+                fix.remove(i)
+            m = bfs(1,m,-1,i,pk)
     fix.append(p)
     return m
 
 def main(g_t,m,*a):    
     global t,sy,sx,size,fix,res
     t = g_t
-    sy,sx = [[5,5],[0,0],[0,0]][t]
+    sy,sx = 5,5
     size = sy * sx
     fix = []
     res = []
     if t == 0:
         global hli
         leaf,hli = a
+        xli = [i for i in range(25) if m[i] == 'x']
+        ct = 0
+        li = [[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14],
+              [4,9,14,19,24,3,8,13,18,23,2,7,12,17,22],
+              [20,21,22,23,24,15,16,17,18,19,10,11,12,13,14],
+              [0,5,10,15,20,1,6,11,16,21,2,7,12,17,22]]
+        di = {len([j for j in i if j in xli]):i for i in li}
+        li = di[min(di)]
 
-        # temp
-        print('root')
-        prt(m,5,5,hli)
-        print('leaf')
-        prt(leaf,5,5,hli)
+        rs = {}
+        hold = []
+        m1 = leaf[::]
+        for i in range(15):
+            if i in [0,5]:
+                j = li[i + 4]
+                if m[li[9]] == 'x' or m[li[14]] == 'x':
+                    pk = leaf[j]
+                    if pk == '0':
+                        m = bfs(1,m,leaf,j,pk)
+                        fix.append(j)
+                    else:
+                        m = sort(m,j,pk)
+            i = li[i]
+            if i in fix + hli: 
+                continue
+            if len([i for i in fix if m[i] != '0']) == 7:
+                break
+            pk = m1[i]
+            if pk == '0':
+                r = [i] + bfs(-1,m1,i,hold)
+                pk = m1[r[-1]]
+                hold.append(pk)
+                rs[pk] = r
+                m1 = exc(m1,i,r[-1])[0]
 
-        for i,j in exp(1,m):
-            print('step ->', j)
-            prt(i,5,5,hli)
+            # m = sort(m,i,pk)
+
+            # temp
+            print('fix ->',fix)
+            print(i,pk)
+            prt(m,5,5)
+            ts1 = time()
+            m = sort(m,i,pk)
+            print('sorted in',round(time() - ts1,3))
+            prt(m,5,5)
+            input('>>>\n')
+
+        m = bfs(1,m,m1,-1,-1)
+        for i in hold[::-1]:
+            r = rs[i]
+            m,step = exc(m,r[-1],r[0],r)
+            res.append(step)
 
     return res
 
-# t,m,leaf,a = 0,'3040500x6070800000x102000','0700000x8005006004x030201',[6,13,16]
+if __name__ == '__main__':
+    t,m,leaf,a = 0,'3040500x6070800000x102000','0700000x8005006004x030201',[6,13,16]
+    t,m,leaf,a = 0,'700x00405800016300020x000','000x70005260000400008x301',[18, 17, 16]
 
-m = [0,0,0,0,0,
-     0,1,0,0,0,
-     0,0,0,0,0,
-     0,0,0,0,0,
-     0,0,0,0,0]
-t,m,leaf,a = 0,list(map(str,m)),list(map(str,m)),[11,12,13]
-
-ts = time()    
-res = main(t,m,leaf,a) if t == 0 else None
-te = time() - ts
-print(res)
-print("{}step, idle {}s(DART-Studio {}m {}s) \n".format(len(res),round(te,3),int((te*250)//60),int((te*250)%60)))
+    ts = time()    
+    res = main(t,m,leaf,a) if t == 0 else None
+    te = time() - ts
+    print(res)
+    print("{}step, idle {}s(DART-Studio {}m {}s) \n".format(len(res),round(te,3),int((te*300)//60),int((te*300)%60)))

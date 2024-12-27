@@ -9,7 +9,7 @@ loop_limit = 10000
 ct,SUM_step,SUM_time,MAX_time = 0,0,0,0
 def print_case():
     if t == 0:
-        print("[{}] | {},'{}','{}'".format(ct,t,m1,m2))
+        print("[{}] | {},'{}','{}',{}".format(ct,t,m1,m2,a))
 def print_info():
     if ct:
         AVG_step,AVG_time = SUM_step // ct,SUM_time / ct        
@@ -20,11 +20,11 @@ def print_info():
               format(round(MAX_time,6), int((MAX_time*250)//60), int((MAX_time*250)%60)))    
 while 1:
     if t == 0:
-        m1,m2 = rdm(t)
+        m1,m2,a = rdm(t)
     ts = time()
     try:
         if t == 0:
-            res = main(t,m1,m2)
+            res = main(t,m1,m2,a)
     except:
         print('Failed Sorting')
         print_case()
