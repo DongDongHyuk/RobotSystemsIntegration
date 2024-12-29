@@ -12,7 +12,7 @@ def aro(p):
     li = [(0,1,2,3,4),(4,9,14,19,24),(20,21,22,23,24),(0,5,10,15,20)]
     return [p + dxy[i] for i in range(4) if p not in li[i]]
 
-def hexp(i):         # expand Hole
+def hexp(m,i):         # expand Hole
     if i in ca:
         return ca[i]
     li = aro(i)
@@ -36,7 +36,7 @@ def exp(n,m,p=-1):
         if t == 0 and n > 0:        # 홀 처리
             if i in hli:
                 continue            
-            di = hexp(i)
+            di = hexp(m,i)
             li += list(di)
         for j in li:
             if m[j] in ('0x' if n > 0 else 'x') or j in fix:
@@ -114,16 +114,6 @@ def main(g_t,m,*a):
               [0,5,10,15,20,1,6,11,16,21,2,7,12,17,22]]
         di = {len([j for j in i if j in xli]):i for i in li}
         li = di[min(di)]
-
-        xli = [i for i in range(25) if m[i] == 'x']
-        ct = 0
-        li = [[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14],
-              [4,9,14,19,24,3,8,13,18,23,2,7,12,17,22],
-              [20,21,22,23,24,15,16,17,18,19,10,11,12,13,14],
-              [0,5,10,15,20,1,6,11,16,21,2,7,12,17,22]]
-        di = {len([j for j in i if j in xli]):i for i in li}
-        li = di[min(di)]
-
         rs = {}
         hold = []
         m1 = leaf[::]
@@ -131,9 +121,9 @@ def main(g_t,m,*a):
             if i in [0,5]:
                 j = li[i + 4]
                 if m[li[9]] == 'x' or m[li[14]] == 'x':
-                    pk = leaf[j]
+                    pk = m1[j]
                     if pk == '0':
-                        m = bfs(1,m,leaf,j,pk)
+                        m = bfs(1,m,m1,j,pk)
                         fix.append(j)
                     else:
                         m = sort(m,j,pk)
@@ -149,19 +139,7 @@ def main(g_t,m,*a):
                 hold.append(pk)
                 rs[pk] = r
                 m1 = exc(m1,i,r[-1])[0]
-
             m = sort(m,i,pk)
-
-            # temp
-            # print('fix ->',fix)
-            # print(i,pk)
-            # prt(m,5,5)
-            # ts1 = time()
-            # m = sort(m,i,pk)
-            # print('sorted in',round(time() - ts1,3))
-            # prt(m,5,5)
-            # input('>>>\n')
-
         m = bfs(1,m,m1,-1,-1)
         for i in hold[::-1]:
             r = rs[i]
@@ -171,9 +149,8 @@ def main(g_t,m,*a):
     return res
 
 if __name__ == '__main__':
-    # t,m,leaf,a = 0,'3040500x6070800000x102000','0700000x8005006004x030201',[6,13,16]
-
-    t,m,leaf,a = 0,'700x00405800016300020x000','000x70005260000400008x301',[18, 17, 16]       # temp
+    t,m,leaf,a = 0,'3040500x6070800000x102000','0700000x8005006004x030201',[6,13,16]
+    t,m,leaf,a = 0,'000x806700000000x14530020','000x615273040008x00000000',[14, 13, 0]
 
     ts = time()    
     res = main(t,m,leaf,a) if t == 0 else None

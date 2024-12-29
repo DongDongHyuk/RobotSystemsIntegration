@@ -2,7 +2,6 @@ from rdm import rdm
 from time import time
 from main import main
 
-
 t = 0 # <- map Type
 loop_limit = 10000
 
