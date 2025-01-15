@@ -79,18 +79,25 @@ def bfs(n,m,*a):
     return path
     
 def sort(m,p,pk):
+    global fix
+    hold = []
     if m[p] != pk:
-        b = len(exp(0,m,p)) == 1
-        if b:
-            m = bfs(1,m,-1,p,'0')
+        cur = p
+        while 1:
+            li = exp(0,m,cur)
+            if len(li) > 1:
+                break
+            m = bfs(1,m,-1,cur,'0')
+            fix.append(cur), hold.append(cur)
+            cur = li[0][0]
+        fix = [i for i in fix if i not in hold]
         r = bfs(0,m,m.index(pk),p)
-        if b:
-            fix.append(p)
+        fix += hold
         for i in r:
-            if i in hli:
-                continue
             if i in fix:
                 fix.remove(i)
+            if i in hli:
+                continue
             m = bfs(1,m,-1,i,pk)
     fix.append(p)
     return m
@@ -150,7 +157,6 @@ def main(g_t,m,*a):
 
 if __name__ == '__main__':
     t,m,leaf,a = 0,'3040500x6070800000x102000','0700000x8005006004x030201',[6,13,16]
-    t,m,leaf,a = 0,'000x806700000000x14530020','000x615273040008x00000000',[14, 13, 0]
 
     ts = time()    
     res = main(t,m,leaf,a) if t == 0 else None
