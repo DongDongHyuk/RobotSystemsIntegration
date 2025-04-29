@@ -1,67 +1,70 @@
-from collections import deque
 from time import time
-from printer import printf
+import sys,os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from Tool.Printer import prt
 
-def exc(m,s,e,li=[]):
-    global ing
+def exc(m,s,e,li=-1):
     m = list(m)
     m[s],m[e] = m[e],m[s]
-    step = li if li else [e,s]
-    pack = 10 if m[s] == 'a' else int(m[s])
-    info = ([ing] if t == 2 else []) + [step,pack]
+    if t == 0 and abs(s-e) not in [1,5]:
+        r = [e,12,s]
+    else:
+        r = [e,s] if li == -1 else li
+    info = [r,10 if m[s] == 'a' else int(m[s])]
     return [''.join(m),info]
-    
-def aro(pos):
-    if t == 0:
-        di = {7:[2,6,8,11,13,17],
-        11:[6,7,10,13,16,17],12:[],13:[7,8,11,14,17,18],
-        17:[7,11,13,16,18,22]}
-        if pos in di:
-            return di[pos]
-    if pos in cache:
-        return cache[pos]
-    res = []
-    dy,dx = [-1,0,1,0],[0,1,0,-1]
-    y,x = divmod(pos,sx)
-    for i in range(4):
-        ny,nx = y + dy[i],x + dx[i]
-        if -1 < ny < sy and -1 < nx < sx:
-            res.append(ny * sx + nx)
-    cache[pos] = res
-    return res
 
-def exp(n,m,pos=-1):
+def aro(p):
+    li = [7,11,13,17] if t == 0 else []
+    li1 = [i for i in li if i != p] if p in li else []
+    dxy = [-sx,1,sx,-1]
+    li = ([(0,1,2,3,4),(4,9,14,19,24),(20,21,22,23,24),(0,5,10,15,20)] if t == 0 else 
+          [(0,1,2,3),(3,7,11,15),(12,13,14,15),(0,4,8,12)])
+    return li1+[p + dxy[i] for i in range(4) if p not in li[i]]
+
+def exp(n,m,p=-1,tf=''):
     res = []
-    for i in range(size) if n > 0 else [pos]:       
-        if ((n > 0 or n == -1) and m[i] != '0') or i in fix:
-            continue        
-        for j in [j for j in aro(i) if m[j] not in ['x','0x'][n > 0] and j not in fix]:            
+    for i in range(size) if n > 0 else [p]:
+        if (n > 0 and m[i] != '0') or fx[i]:
+            continue
+        for j in [j for j in aro(i) if m[j] not in ['x','0x'][n > 0]+tf and not fx[j]]:
             res.append(exc(m,i,j) if n > 0 else [j,j])
     return res
 
-def bfs(n,m,*a):
-    global res
-    if n == -1:
+def src(n,m,*a,res1=-1,tf=''):
+    global res,mkdCt        # temp
+    if n == -2:
+        s, = a
+        li = []
+    if n in [-1,-3]:
         s, = a
     if n == 0:
         s,e = a
     if n == 1:
-        leaf,pos,pack = a
-    cur = m if n > 0 else s
-    que = deque([cur])
-    mkd,step = {cur:-1},{cur:-1}
+        p,pk = a
+    q = [m if n > 0 else s] 
+    mkd,step = {q[0]:-1},{q[0]:-1}
     while 1:
-        cur = que.popleft()
-        if n == -1 and m[cur] != '0':
+        if n == -2 and not q:
+            return li
+        if n == -1 and (len(q) > 1 or not q):
+            break
+        if n == 0 and not q:
+            return -1
+        cur = q.pop(0)
+        if n > 0:       # temp
+            mkdCt += 1
+        if n == -3 and m[cur] != '0':
             break
         if n == 0 and cur == e:
             break
         if n == 1:
-            if (pos == -1 and cur == leaf) or (pos != -1 and cur[pos] == pack):
+            if (pk == -1 and cur == p) or (p != -1 and cur[p] == pk):
                 break
-        for i,j in exp(n,cur if n > 0 else m,cur):
+        for i,j in exp(n,cur if n > 0 else m,cur,tf):
             if i not in mkd:
-                que.append(i)
+                if n == -2:
+                    li.append(i)
+                q.append(i)
                 mkd[i],step[i] = cur,j
     mkd[-2] = cur
     path = [step[cur]]
@@ -69,90 +72,121 @@ def bfs(n,m,*a):
         cur = mkd[cur]
         path.append(step[cur])
     if n > 0:
-        res += path[::-1][1:]
+        res1 = res1 if res1 != -1 else res
+        res1 += path[::-1][1:]
         return mkd[-2]
     return path[::-1][1:]
-    
-def sort(m,leaf,pos,pack):
-    global fix
-    hold = []
-    if len(exp(0,m,pos)) == 1:
-        m = bfs(1,m,leaf,pos,'0')
-        hold.append(pos)
-    r = bfs(0,m,m.index(pack),pos)
-    fix += hold
-    for i in r:
-        if i in hold:
-            fix.remove(i)
-        m = bfs(1,m,leaf,i,pack)
-    fix.append(pos)
+
+def sort(m,e,pk):
+    global res
+    if m[e] == pk:
+        fx[e]=1
+        return m
+    def move1(m,p):
+        li = []
+        m1 = m[:]
+        m1 = src(1,m,p,'0',res1=li,tf=pk)
+        m1 = src(1,m1,p,pk,res1=li)
+        ct = len([i for i in [e]+src(-2,m1,e,tf=pk) if m1[i] == '0'])
+        return ct,m1,li
+    def move2(m,li):
+        global res
+        li1 = []
+        for i in li:
+            fx[i]=1
+            li1.append((i,src(-2,m,e)))
+            fx[i]=0
+        li = max(li1,key=lambda i:len(i[1]))
+        for i in src(0,m,s,li[0]):
+            ct,m1,res1 = move1(m,i)
+            res += res1
+            m = m1[:]
+        return m
+    r = src(-1,m,e)
+    ctz = m.count('0')-(3 if t == 0 else 0)
+    while m[e] != pk:        
+        s = m.index(pk)
+        cs = src(0,m,s,e)[0]
+        ct = len([i for i in [e]+src(-2,m,e,tf=pk) if m[i] == '0'])         # need fix
+        if ct < 2 and not (cs == e and m[e] == '0'):
+            m = move2(m,[i for i,j in exp(0,m,s) if i != e])
+            continue
+        ct,m1,res1 = move1(m,cs)
+        if ct < 2 and not (cs == e and m[e] == '0') and not (cs == e and ct > -1):
+            # print('ct ->',ct,'ctz ->',ctz)
+            # print('e ->',e,'pk ->',pk)
+            # prt(m,4,4)
+            m = move2(m,[s]+[i for i,j in exp(0,m,cs) if i != s])
+            s = m.index(pk)
+            r1 = src(0,m,s,e)[:ctz]
+            for i in r1[::-1]:
+                m = src(1,m,i,'0',tf=pk)
+                fx[i]=1
+            fxli(r1,0)
+            for i in r1:
+                m = src(1,m,i,pk)
+            continue
+        res += res1
+        m = m1[:]
+    fx[e]=1
     return m
 
-def main(g_t,m,*a):    
-    global t,sy,sx,size,fix,res,cache
+def main(g_t,m,*a):
+    global t,sy,sx,size,fx,fxli,res
     t = g_t
-    sy,sx = [[5,5],[4,4],[4,4]][t]
+    sy,sx = [5,5] if t == 0 else [4,4]
     size = sy * sx
-    fix = []
+    fx = {i:0 for i in range(size)}
+    fxli = lambda li,n: fx.update({i:n for i in li})
     res = []
-    cache = {}      # cache reset
     if t == 0:
         leaf = '1x0x23000450006700089x0xa'
-        fix = [2,22]
-        for i in [0,24,4,20,5,19,15,9,10,14]:
-            m = sort(m,leaf,i,leaf[i])
+        fx[2],fx[12]=1,1
+        li = [0,4,20,24,5,10,15,9,14,19]
+        for i in li:
+            m = sort(m,i,leaf[i])
     if t == 1:
-        leaf = list('1234567800000000')
-        leaf[m.index('x')] = 'x'
-        leaf = ''.join(leaf)
-        for i in [1,2,0,3,5,6,4,7]:
-            m = sort(m,leaf,i,leaf[i])
+        leaf = '1234567800000000'
+        li = [0,1,2,3]+([7,6,5,4] if m[10]=='x' else [4,5,6,7])
+        for i in li:
+            m = sort(m,i,leaf[i])
     if t == 2:
-        global ing
-        ing = 0
         m1 = m[:]
         m2,leaf1 = a
-        leaf2 = ''.join([leaf1[0+i:4+i][::-1] for i in range(0,16,4)])
-        for i in range(2): 
-            ing = i
-            fix = []
-            m = [m1,m2][i][:]
-            leaf = [leaf1,leaf2][i][:]
-            leafc = leaf[:]
-            li = {5:[15,11,14,13],6:[12,8,13,14],9:[3,7,2,1],10:[0,4,1,2]}[m.index('x')]
-            hold = {}
-            unhold = []
+        leaf2 = ''.join([leaf1[i] for i in [3,2,1,0,7,6,5,4,11,10,9,8,15,14,13,12]])
+        for m,leaf in [[m1,leaf1],[m2,leaf2]]:
+            leaf = list(leaf)
+            li = [12,13,14,15,8] if m.index('x') in [5,6] else [0,1,2,3,4]
+            li1 = []
             for i in li:
-                pack = leafc[i]
-                if i in hold or pack == '0':
-                    r = bfs(-1,leafc,i)
-                    pos = r[-1]
-                    pack = leafc[pos]
-                    hold[pack] = [i]+r
-                    unhold.append(pack)
-                    leafc = list(leafc)
-                    leafc[pos] = '0'
-                    leafc = ''.join(leafc)
-                m = sort(m,leaf,i,pack)
-            pack, = [i for i in leaf if i not in '0x' and m.index(i) not in fix]
-            m = sort(m,leaf,leaf.index(pack),pack)
-            for pack in unhold[::-1]:
-                r = hold[pack]            
-                m,step = exc(m,r[-1],r[0],r)
-                res.append(step)
+                pk = leaf[i]
+                if leaf[i] == '0':
+                    r = src(-3,''.join(leaf),i)
+                    p = r[-1]
+                    pk = leaf[p]
+                m = sort(m,i,pk)
+                if leaf[i] == '0':
+                    leaf[p],leaf[i] = '0',pk
+                    li1.append([i]+r)
+            fx={i:0 for i in fx}
+            res += li1[::-1] + ['!']
     return res
 
+mkdCt = 0       # temp
 if __name__ == '__main__':
-
-    t,m = 0,'5x0x3400089000a600012x0x7'
-    # t,m = 1,'0000050087x16342'
-    # t,m1,m2,leaf = 2,'10300x0402000005','000042x513000000','000000x050004321'
-        
-    ts = time()    
-    res = main(t,m) if t < 2 else main(t,m1,m2,leaf)
+    t,m1 = 0,'2x0xa7000890004600015x0x3'
+    t,m1 = 1,'0000050807x16342'
+    t,m1 = 1,'043200086x057010'
+    t,m1,m2,m3 = 2,'10300x0402000005','000042x513000000','00000x0000051234'        # C1, C2, C1Sorted
+    
+    ts = time()
+    res = main(t,m1) if t < 2 else main(t,m1,m2,m3)
     te = time() - ts
+    # for i in res:
+    #     if type(i) == str: 
+    #         prt(i,4,4)
+    #     else:
+    #         print(i)
     print(res)
-    print("{}step, idle {}s(dart {}m {}s) \n".
-    format(len(res),round(te,3),int((te*250)//60),int((te*250)%60)))
-
-
+    print('visited :',mkdCt)
+    print("{}step, idle {}s(DART-Studio {}m {}s) \n".format(len(res),round(te,3),int((te*250)//60),int((te*250)%60)))
