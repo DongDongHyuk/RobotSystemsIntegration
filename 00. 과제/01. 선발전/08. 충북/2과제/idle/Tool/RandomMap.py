@@ -21,11 +21,9 @@ def randomMap(t):
         di = {5:6,6:5,9:10,10:9}
         for i in range(3):
             m = ['0']*16
-            m[di[fp] if i < 2 else fp] = 'x'
+            m[di[fp] if i in [0,2] else fp] = 'x'
             for pk in '12345':
                 p = c([i for i in range(16) if m[i] == '0'])
                 m[p] = pk
             res.append(''.join(m))
     return res
-
-m1,m2,m3 = randomMap(2)

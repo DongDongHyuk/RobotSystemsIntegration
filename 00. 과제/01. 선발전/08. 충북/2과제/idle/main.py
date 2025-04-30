@@ -35,24 +35,24 @@ def src(n,m,*a,res1=-1,tf=''):
     if n == -2:
         s, = a
         li = []
-    if n in [-1,-3]:
+    if n in [-1,-3,-4]:
         s, = a
     if n == 0:
         s,e = a
     if n == 1:
         p,pk = a
-    q = [m if n > 0 else s] 
+    q = [m if n > 0 else s]
     mkd,step = {q[0]:-1},{q[0]:-1}
     while 1:
         if n == -2 and not q:
             return li
         if n == -1 and (len(q) > 1 or not q):
             break
-        if n == 0 and not q:
-            return -1
         cur = q.pop(0)
         if n > 0:       # temp
             mkdCt += 1
+        if n == -4 and m[cur] == '0':
+            break
         if n == -3 and m[cur] != '0':
             break
         if n == 0 and cur == e:
@@ -82,14 +82,19 @@ def sort(m,e,pk):
     if m[e] == pk:
         fx[e]=1
         return m
-    def move1(m,p):
-        li = []
+    def emt(m,p,res1=-1):
+        r = src(-4,m,p,tf=pk)
+        for i in r[::-1]+[p]:
+            m = src(1,m,i,'0',tf=pk,res1=res1)
+        return m
+    def chk(m,p):
+        res1 = []
         m1 = m[:]
-        m1 = src(1,m,p,'0',res1=li,tf=pk)
-        m1 = src(1,m1,p,pk,res1=li)
+        m1 = emt(m1,p,res1=res1)
+        m1 = src(1,m1,p,pk,res1=res1)
         ct = len([i for i in [e]+src(-2,m1,e,tf=pk) if m1[i] == '0'])
-        return ct,m1,li
-    def move2(m,li):
+        return ct,m1,res1
+    def move(m,li):
         global res
         li1 = []
         for i in li:
@@ -98,29 +103,26 @@ def sort(m,e,pk):
             fx[i]=0
         li = max(li1,key=lambda i:len(i[1]))
         for i in src(0,m,s,li[0]):
-            ct,m1,res1 = move1(m,i)
+            ct,m1,res1 = chk(m,i)
             res += res1
             m = m1[:]
         return m
     r = src(-1,m,e)
     ctz = m.count('0')-(3 if t == 0 else 0)
-    while m[e] != pk:        
+    while m[e] != pk:
         s = m.index(pk)
         cs = src(0,m,s,e)[0]
-        ct = len([i for i in [e]+src(-2,m,e,tf=pk) if m[i] == '0'])         # need fix
+        ct = len([i for i in [e]+src(-2,m,e,tf=pk) if m[i] == '0'])
         if ct < 2 and not (cs == e and m[e] == '0'):
-            m = move2(m,[i for i,j in exp(0,m,s) if i != e])
+            m = move(m,[i for i,j in exp(0,m,s) if i != e])
             continue
-        ct,m1,res1 = move1(m,cs)
+        ct,m1,res1 = chk(m,cs)
         if ct < 2 and not (cs == e and m[e] == '0') and not (cs == e and ct > -1):
-            # print('ct ->',ct,'ctz ->',ctz)
-            # print('e ->',e,'pk ->',pk)
-            # prt(m,4,4)
-            m = move2(m,[s]+[i for i,j in exp(0,m,cs) if i != s])
+            m = move(m,[s]+[i for i,j in exp(0,m,cs) if i != s])
             s = m.index(pk)
             r1 = src(0,m,s,e)[:ctz]
             for i in r1[::-1]:
-                m = src(1,m,i,'0',tf=pk)
+                m = emt(m,i)
                 fx[i]=1
             fxli(r1,0)
             for i in r1:
@@ -141,8 +143,8 @@ def main(g_t,m,*a):
     res = []
     if t == 0:
         leaf = '1x0x23000450006700089x0xa'
-        fx[2],fx[12]=1,1
-        li = [0,4,20,24,5,10,15,9,14,19]
+        fxli([2,12,22],1)
+        li = [0,5,20,15,10,4,9,24,19,14]
         for i in li:
             m = sort(m,i,leaf[i])
     if t == 1:
@@ -155,7 +157,6 @@ def main(g_t,m,*a):
         m2,leaf1 = a
         leaf2 = ''.join([leaf1[i] for i in [3,2,1,0,7,6,5,4,11,10,9,8,15,14,13,12]])
         for m,leaf in [[m1,leaf1],[m2,leaf2]]:
-            leaf = list(leaf)
             li = [12,13,14,15,8] if m.index('x') in [5,6] else [0,1,2,3,4]
             li1 = []
             for i in li:
@@ -166,18 +167,19 @@ def main(g_t,m,*a):
                     pk = leaf[p]
                 m = sort(m,i,pk)
                 if leaf[i] == '0':
-                    leaf[p],leaf[i] = '0',pk
-                    li1.append([i]+r)
+                    leaf,info = exc(leaf,i,p,[i]+r)
+                    li1.append(info)
             fx={i:0 for i in fx}
-            res += li1[::-1] + ['!']
+            res += li1[::-1]
+            res.append([[-1,-1],-1])
     return res
 
 mkdCt = 0       # temp
 if __name__ == '__main__':
-    t,m1 = 0,'2x0xa7000890004600015x0x3'
     t,m1 = 1,'0000050807x16342'
-    t,m1 = 1,'043200086x057010'
-    t,m1,m2,m3 = 2,'10300x0402000005','000042x513000000','00000x0000051234'        # C1, C2, C1Sorted
+    t,m1,m2,m3 = 2,'10300x0402000005','000042x513000000','00000x0000051234'
+
+    t,m1 = 0,'2x0xa7000890004600015x0x3'
     
     ts = time()
     res = main(t,m1) if t < 2 else main(t,m1,m2,m3)
