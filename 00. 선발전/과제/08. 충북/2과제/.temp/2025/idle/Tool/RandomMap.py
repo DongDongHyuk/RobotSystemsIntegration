@@ -11,7 +11,7 @@ def randomMap(t):
         res.append(''.join(m))
     if t == 1:
         m = ['0']*16
-        m[c([5,6,9,10])] = 'x'
+        m[c([9,10,13,14])] = 'x'
         for pk in '12345678':
             p = c([i for i in range(16) if m[i] == '0'])
             m[p] = pk

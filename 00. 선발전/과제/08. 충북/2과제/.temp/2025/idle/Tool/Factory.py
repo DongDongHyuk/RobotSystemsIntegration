@@ -1,7 +1,6 @@
 from Case import Case
 import sys,os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-# from release.main_perf2_2 import main      # from 'fileName' import main
 from main import main      # from 'fileName' import main
 Case.main = main
 
@@ -14,7 +13,7 @@ def factory():
             break
     Case.status()
 
-t = 0
+t = 2
 limit = 100
 
 Case.printStyle = " [{}] | {},'{}'" if t < 2 else " [{}] | {},'{}','{}','{}'" # .format(ct, t, m1, *args)
