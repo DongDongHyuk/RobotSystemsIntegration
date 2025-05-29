@@ -14,10 +14,10 @@ def factory():
             break
     Case.status()
 
-t = 0
-limit = 100
+t = 1
+limit = 10000
 
-Case.printStyle = " [{}] | {},'{}','{}'" if t else " [{}] | {},'{}'"
+Case.printStyle = " [{}] | {},'{}'" if t == 0 else " [{}] | {},'{}','{}','{}','{}'" if t == 1 else " [{}] | {},'{}','{}'"
 try:
     print()
     factory()
