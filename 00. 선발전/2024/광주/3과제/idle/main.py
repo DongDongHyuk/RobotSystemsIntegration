@@ -12,35 +12,36 @@ def aro(pos):
     if pos in cache:
         return cache[pos]
     res = []
-    dy,dx,dz = [-1,0,1,0,0,0],[0,1,0,-1,0,0],[0,0,0,0,-1,1]
-    y,x,z = (pos // sx) % sy, pos % sx, pos // size 
-    for i in range(6):
-        ny,nx,nz = y + dy[i],x + dx[i],z + dz[i]
-        if -1 < ny < sy and -1 < nx < sx and -1 < nz < sz:
-            res.append((size * nz) + ny * sx + nx)
+    dy,dx = [-1,0,1,0],[0,1,0,-1]
+    y,x = divmod(pos,sx)
+    for i in range(4):
+        ny,nx = y + dy[i],x + dx[i]
+        if -1 < ny < sy and -1 < nx < sx:
+            res.append(ny * sx + nx)
     cache[pos] = res
     return res
 
 def exp(n,m,p=-1):
     res = []
-    for i in range(size * sz) if n > 0 else [p]:
-        if fx[i] or m[i] == 'x' or (n > 0 and m[i] == '0'):
+    di1,di2 = {},{}
+    for i in range(18 if t == 1 else si):
+        if m[i] != '0':
+            di1[i%si] = i
+        if m[i] == '0' and i%9 not in di2:
+            di2[i%si] = i
+    
+    for i in di1 if n > 0 else [p%si]:
+        if fx[di1[i] if n > 0 else p] or m[i] == 'x':
             continue
         if n == -3 and m[i] != '0':
             continue
-        if t == 1 and n > 0 and (i < 9 and m[i + 9] != '0'):
-            continue
-        di = src(-1,m,i,-1) if n > 0 else aro(i)
+        
+        di = src(-1,m,di1[i],-1) if n > 0 else aro(i)
+
         for j in di:
-            if j == i or fx[j] or m[j] == 'x' or (n == -1 and m[j] != '0'):
+            if fx[j] or m[j] == 'x' or (n == -1 and j not in di2):
                 continue
-            if t == 1 and n > 0 and (i%size == j%size or (j > 8 and m[j - 9] == '0')):
-                continue
-
-            # if t == 1 and abs(i - j) not in [1,3]:
-            #     continue
-
-            res.append(exc(m,j,i,di[j]) if n > 0 else [j,j])        
+            res.append(exc(m,di2[j%si],di1[i],di[j]) if n > 0 else [di2[j]]*2)
     return res
 
 vs = 0
@@ -83,8 +84,6 @@ def src(n,m,*a):
             ct = -2 ** (30 if m[p] == pk else 20)
         return ct
     def heu1(m):
-        if m in cache:
-            return cache[m]
         ct1,ct2 = 0,0
         di = {'00':0,'10':1,'11':1,'21':1,'20':2,'22':2,'12':3}
         for i in range(9):
@@ -108,9 +107,7 @@ def src(n,m,*a):
                     pk = m[j]
             if pk == v3[i]:
                 ct1 += 1
-    
-        cache[m] = [ct1 == 21,((-100 * ct1) + ct2)]
-        return [ct1 == 21,((-100 * ct1) + ct2)]
+        return [ct1 == 21,0] # ((-100 * ct1) + ct2)]        # temp
     def put(cur):
         if n > 0:
             h = heu1(cur)[1] if n == 2 else heu0(cur)
@@ -122,7 +119,8 @@ def src(n,m,*a):
     while 1:
         if n == -2 and len(q) > 1:      # default
             break
-        if n in [0,-1] and not q:      # default
+        if n == -1 and not q:      # default
+            del mkd[s]
             return mkd
         cur = get()
         if n > 0:      # temp
@@ -150,11 +148,11 @@ def src(n,m,*a):
     return res1
 
 def main(g_t,m,*a):
-    global t,sy,sx,sz,size,fx,fxli,cache,res
+    global t,sy,sx,si,fx,fxli,cache,res
     t = g_t
-    sy,sx,sz = [3,3,1] if t == 0 else [3,3,2] if t == 1 else [4,4,1]
-    size = sy * sx
-    fx = {i:0 for i in range(size * sz)}
+    sy,sx = [3,3] if t == 0 else [3,3] if t == 1 else [4,4]
+    si = sy * sx
+    fx = {i:0 for i in range(18 if t == 1 else si)}
     fxli = lambda li,n: fx.update({i:n for i in li})
     cache = {}
     res = []
@@ -164,16 +162,19 @@ def main(g_t,m,*a):
     if t == 1:
         global v1,v2,v3,ctp
         v1,v2,v3 = a
-        ctp = 6 - (v1.count('1') + v1.count('3'))
 
-        for i,j in exp(2,m):
+        # print(src(-1,m,10,-1))      # temp
+
+        prt(m,3,3,2)
+        for i,j in exp(1,m):
             print(j)
             prt(i,3,3,2)
-        # exit()
+        exit()
         # prt('110121112000022022',3,3,2)
         # input()
 
-        src(2,m)
+        # src(2,m)
+
     if t == 2:
         leaf,=a
         li = [i for i in [0,3,12,15] if m[i] != 'x']
@@ -198,7 +199,6 @@ if __name__ == '__main__':
 
     t,m = 0,'207450316'
     t,m,v1,v2,v3 = 1,'111002221120002201','120133302','112222','212222'
-    t,m,v1,v2,v3 = 1,'221121011001202020','130122300','122222','121222'
     t,m,v1,v2,v3 = 1,'112202101210200201','110123132','112022','211220'
     # t,m1,m2 = 2,'103005x008026470','850001x427600030'
 
