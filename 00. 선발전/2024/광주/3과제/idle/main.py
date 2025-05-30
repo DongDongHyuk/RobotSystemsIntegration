@@ -12,35 +12,37 @@ def aro(pos):
     if pos in cache:
         return cache[pos]
     res = []
-    dy,dx,dz = [-1,0,1,0,0,0],[0,1,0,-1,0,0],[0,0,0,0,-1,1]
-    y,x,z = (pos // sx) % sy, pos % sx, pos // size 
-    for i in range(6):
-        ny,nx,nz = y + dy[i],x + dx[i],z + dz[i]
-        if -1 < ny < sy and -1 < nx < sx and -1 < nz < sz:
-            res.append((size * nz) + ny * sx + nx)
+    dy,dx = [-1,0,1,0],[0,1,0,-1]
+    y,x = divmod(pos,sx)
+    for i in range(4):
+        ny,nx = y + dy[i],x + dx[i]
+        if -1 < ny < sy and -1 < nx < sx:
+            res.append(ny * sx + nx)
     cache[pos] = res
     return res
 
 def exp(n,m,p=-1):
     res = []
-    for i in range(size * sz) if n > 0 else [p]:
-        if fx[i] or m[i] == 'x' or (n > 0 and m[i] == '0'):
-            continue
-        if n == -3 and m[i] != '0':
-            continue
-        if t == 1 and n > 0 and (i < 9 and m[i + 9] != '0'):
-            continue
-        di = src(-1,m,i,-1) if n > 0 else aro(i)
-        for j in di:
-            if j == i or fx[j] or m[j] == 'x' or (n == -1 and m[j] != '0'):
-                continue
-            if t == 1 and n > 0 and (i%size == j%size or (j > 8 and m[j - 9] == '0')):
-                continue
-
-            # if t == 1 and abs(i - j) not in [1,3]:
-            #     continue
-
-            res.append(exc(m,j,i,di[j]) if n > 0 else [j,j])        
+    di1,di2 = {},{}
+    for i in range(18 if t == 1 else si):
+        if not fx[i] and m[i] != 'x':
+            if m[i] != '0':
+                di1[i%si] = i
+            if (m[i] == '0' and i%si not in di2) or n < 1:
+                di2[i%si] = i
+    if n < 1:
+        return [[i,i] for i in aro(p) if i in di2]
+    # 길게 보기 전용 BFS, 길찾기는 한번만 확장
+    for i in di1 if n > 0 else [p]:
+        q = [i]
+        r = {i:[di1[i]]}
+        for cur in q:
+            for j in aro(cur):
+                if j in q or j not in di2:      # 방문 처리, 빈칸 인가.
+                    continue
+                q.append(j)
+                r[j] = r[cur] + [di2[j]]
+                res.append(exc(m,di2[j],di1[i],r[j]))
     return res
 
 vs = 0
@@ -52,7 +54,7 @@ def src(n,m,*a):
         if n in [0,-2] and (n,s,e) in cache:
             return cache[n,s,e]
     if n == 1:
-        leaf,p,pk = a
+        leaf,p,pk = a    
     cur = m if n > 0 else s
     q = PriorityQueue() if n > 0 else []
     mkd = {cur:[cur]}
@@ -62,7 +64,7 @@ def src(n,m,*a):
         if p != -1:
             e = p
             di = {}
-            for i in range(size*sz):
+            for i in range(si):
                 if m[i] == pk and not fx[i]:
                     di[i] = len([i for i in src(0,m,i,e) if m[i] not in '0'+pk])            
             s = min(di,key=lambda n:di[n])
@@ -71,20 +73,18 @@ def src(n,m,*a):
             r2 = src(-2,m,p,-1)
             isDead = len(r2) > 1
         used = []
-        for i in range(size*sz):
+        for i in range(si):
             if m[i] not in '0x':
                 y1,x1 = divmod(i,sx)
-                p1 = p if p != -1 else [j for j in range(size*sz) if leaf[j] == m[i] and j not in used][0]
+                p1 = p if p != -1 else [j for j in range(si) if leaf[j] == m[i] and j not in used][0]
                 used.append(p1)
                 y2,x2 = divmod(p1,sx)
                 dst = (abs(y1 - y2) + abs(x1 - x2)) + 1
-                ct += (100 * (size - dst) if isDead and i in r2 else -dst) if p != -1 else dst ** 2
+                ct += (100 * (si - dst) if isDead and i in r2 else -dst) if p != -1 else dst ** 2
         if p != -1 and not rp:
             ct = -2 ** (30 if m[p] == pk else 20)
         return ct
     def heu1(m):
-        if m in cache:
-            return cache[m]
         ct1,ct2 = 0,0
         di = {'00':0,'10':1,'11':1,'21':1,'20':2,'22':2,'12':3}
         for i in range(9):
@@ -108,9 +108,7 @@ def src(n,m,*a):
                     pk = m[j]
             if pk == v3[i]:
                 ct1 += 1
-    
-        cache[m] = [ct1 == 21,((-100 * ct1) + ct2)]
-        return [ct1 == 21,((-100 * ct1) + ct2)]
+        return [ct1 == 21, ((-100 * ct1) + ct2)]        # temp
     def put(cur):
         if n > 0:
             h = heu1(cur)[1] if n == 2 else heu0(cur)
@@ -122,8 +120,6 @@ def src(n,m,*a):
     while 1:
         if n == -2 and len(q) > 1:      # default
             break
-        if n in [0,-1] and not q:      # default
-            return mkd
         cur = get()
         if n > 0:      # temp
             vs += 1
@@ -150,11 +146,11 @@ def src(n,m,*a):
     return res1
 
 def main(g_t,m,*a):
-    global t,sy,sx,sz,size,fx,fxli,cache,res
+    global t,sy,sx,si,fx,fxli,cache,res
     t = g_t
-    sy,sx,sz = [3,3,1] if t == 0 else [3,3,2] if t == 1 else [4,4,1]
-    size = sy * sx
-    fx = {i:0 for i in range(size * sz)}
+    sy,sx = [3,3] if t == 0 else [3,3] if t == 1 else [4,4]
+    si = sy * sx
+    fx = {i:0 for i in range(18 if t == 1 else si)}
     fxli = lambda li,n: fx.update({i:n for i in li})
     cache = {}
     res = []
@@ -162,17 +158,8 @@ def main(g_t,m,*a):
         leaf = '123456700'
         src(1,m,leaf,-1,-1)
     if t == 1:
-        global v1,v2,v3,ctp
+        global v1,v2,v3
         v1,v2,v3 = a
-        ctp = 6 - (v1.count('1') + v1.count('3'))
-
-        for i,j in exp(2,m):
-            print(j)
-            prt(i,3,3,2)
-        # exit()
-        # prt('110121112000022022',3,3,2)
-        # input()
-
         src(2,m)
     if t == 2:
         leaf,=a
@@ -196,11 +183,9 @@ def main(g_t,m,*a):
 
 if __name__ == '__main__':
 
-    t,m = 0,'207450316'
+    t,m = 0,'471620503'
     t,m,v1,v2,v3 = 1,'111002221120002201','120133302','112222','212222'
-    t,m,v1,v2,v3 = 1,'221121011001202020','130122300','122222','121222'
-    t,m,v1,v2,v3 = 1,'112202101210200201','110123132','112022','211220'
-    # t,m1,m2 = 2,'103005x008026470','850001x427600030'
+    t,m1,m2 = 2,'103005x008026470','850001x427600030'
 
     ts = time()
     res = main(t,m) if t == 0 else main(t,m,v1,v2,v3) if t == 1 else main(t,m1,m2)
