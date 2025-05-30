@@ -17,7 +17,7 @@ def factory():
 t = 1
 limit = 10000
 
-Case.printStyle = " [{}] | {},'{}'" if t == 0 else " [{}] | {},'{}','{}','{}','{}'" if t == 1 else " [{}] | {},'{}','{}'"
+Case.printStyle = " [{}] | {},'{}'" if t == 0 else " [{}] | {},'{}','{}','{}','{}','{}'" if t == 1 else " [{}] | {},'{}','{}'"
 try:
     print()
     factory()

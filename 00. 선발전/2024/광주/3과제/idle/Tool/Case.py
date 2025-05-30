@@ -27,7 +27,10 @@ class Case:
         m,*a = self.rdm
         try:
             t = time()
-            self.res = Case.main(self.Type,m,*a)
+            if self.Type == 1:
+                self.res = Case.main(self.Type,m,*a[:-1])
+            else:
+                self.res = Case.main(self.Type,m,*a)
             self.Step = len(self.res)
             self.Time = round(time() - t,5)
         except Exception as err:
