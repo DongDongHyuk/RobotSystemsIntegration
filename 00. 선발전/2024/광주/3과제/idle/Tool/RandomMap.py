@@ -39,9 +39,9 @@ def randomMap(t):
                 m[p] = pk
             if i:
                 res += view(''.join(m))
-            else:
                 res.append(''.join(m))
-            
+            else:
+                res.append(''.join(m))            
     if t == 2:
         x = c(range(16))
         for i in range(2):
@@ -56,9 +56,10 @@ def randomMap(t):
 # m = randomMap(0)
 # prt(m,3,3)
 
-# m1,view1,view2,view3 = randomMap(1)
+# m1,view1,view2,view3,m2 = randomMap(1)
 # print(view1,view2,view3)
 # prt(m1,3,3,2)
+# prt(m2,3,3,2)
 
 # m1,m2 = randomMap(2)
 # prt(m1,4,4)
