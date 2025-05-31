@@ -1,3 +1,183 @@
+from queue import *
+
+def exc(m,s,e,r):
+    m = list(m)
+    m[s],m[e] = m[e],m[s]
+    info = [r,int(m[s])]
+    return [''.join(m),info]
+
+def aro(pos):
+    if pos in cache:
+        return cache[pos]
+    res = []
+    dy,dx = [-1,0,1,0],[0,1,0,-1]
+    y,x = divmod(pos,sx)
+    for i in range(4):
+        ny,nx = y + dy[i],x + dx[i]
+        if -1 < ny < sy and -1 < nx < sx:
+            res.append(ny * sx + nx)
+    cache[pos] = res
+    return res
+
+def exp(n,m,p=-1):
+    res = []
+    di1,di2 = {},{}
+    for i in range(18 if t == 1 else si):
+        if not fx[i] and m[i] != 'x':
+            if m[i] != '0':
+                di1[i%si] = i
+            if (m[i] == '0' and i%si not in di2) or n < 1:
+                di2[i%si] = i
+    if n < 1:
+        return [[i,i] for i in aro(p) if i in di2]
+    # 길게 보기 전용 BFS, 길찾기는 한번만 확장
+    for i in di1 if n > 0 else [p]:
+        q = [i]
+        r = {i:[di1[i]]}
+        for cur in q:
+            for j in aro(cur):
+                if j in q or j not in di2:      # 방문 처리, 빈칸 인가.
+                    continue
+                q.append(j)
+                r[j] = r[cur] + [di2[j]]
+                res.append(exc(m,di2[j],di1[i],r[j]))
+    return res
+
+vs = 0
+def src(n,m,*a):
+    global res
+    global vs       # temp
+    if n < 1:
+        s,e = a
+        if n in [0,-2] and (n,s,e) in cache:
+            return cache[n,s,e]
+    if n == 1:
+        leaf,p,pk = a    
+    cur = m if n > 0 else s
+    q = PriorityQueue() if n > 0 else []
+    mkd = {cur:[cur]}
+    g = {cur:0}    
+    def heu0(m):
+        ct = 0
+        if p != -1:
+            e = p
+            di = {}
+            for i in range(si):
+                if m[i] == pk and not fx[i]:
+                    di[i] = len([i for i in src(0,m,i,e) if m[i] not in '0'+pk])            
+            s = min(di,key=lambda n:di[n])
+            rp = di[s]            
+            ct += 10000 * rp
+            r2 = src(-2,m,p,-1)
+            isDead = len(r2) > 1
+        used = []
+        for i in range(si):
+            if m[i] not in '0x':
+                y1,x1 = divmod(i,sx)
+                p1 = p if p != -1 else [j for j in range(si) if leaf[j] == m[i] and j not in used][0]
+                used.append(p1)
+                y2,x2 = divmod(p1,sx)
+                dst = (abs(y1 - y2) + abs(x1 - x2)) + 1
+                ct += (100 * (si - dst) if isDead and i in r2 else -dst) if p != -1 else dst ** 2
+        if p != -1 and not rp:
+            ct = -2 ** (30 if m[p] == pk else 20)
+        return ct
+    def heu1(m):
+        ct1,ct2 = 0,0
+        di = {'00':0,'10':1,'11':1,'21':1,'20':2,'22':2,'12':3}
+        for i in range(9):
+            if str(di[m[i]+m[i+9]]) == v1[i]:
+                ct1 += 1
+            ct2 += -10000 * (v1[i] == '2' and m[i] == '2')
+            ct2 += -10000 * (v1[i] == '3' and m[i] == '1')
+        li1 = [[0,3,6],[1,4,7],[2,5,8],[9,12,15],[10,13,16],[11,14,17]]
+        for i in range(6):
+            pk = '0'
+            for j in li1[i]:
+                if m[j] != '0':
+                    pk = m[j]
+            if pk == v2[i]:
+                ct1 += 1
+        li1 = [[6,7,8],[3,4,5],[0,1,2],[15,16,17],[12,13,14],[9,10,11]]
+        for i in range(6):
+            pk = '0'
+            for j in li1[i]:
+                if m[j] != '0':
+                    pk = m[j]
+            if pk == v3[i]:
+                ct1 += 1
+        return [ct1 == 21, ((-100 * ct1) + ct2)]        # temp
+    def put(cur):
+        if n > 0:
+            h = heu1(cur)[1] if n == 2 else heu0(cur)
+            q.put((g[cur] + h, cur))
+        else:
+            q.append(cur)
+    get = lambda : q.get()[1] if n > 0 else q.pop(0)
+    put(cur)
+    while 1:
+        if n == -2 and len(q) > 1:      # default
+            break
+        cur = get()
+        if n > 0:      # temp
+            vs += 1
+        if n == -3 and m[cur] != '0' and cur not in e:
+            break
+        if n == 0 and cur == e:
+            break
+        if n == 1:
+            if (p == -1 and cur == leaf) or (p != -1 and cur[p] == pk):
+                break
+        if n == 2 and heu1(cur)[0]:
+            break
+        for i,j in exp(n,cur if n > 0 else m,cur):
+            if i not in mkd:
+                mkd[i] = mkd[cur] + [j]
+                g[i] = g[cur] + 1
+                put(i)
+    res1 = mkd[cur]
+    if n > 0:
+        res += res1[1:]
+        return cur
+    if n in [0,-2]:
+        cache[n,s,e] = res1
+    return res1
+
+def main(g_t,m,*a):
+    global t,sy,sx,si,fx,fxli,cache,res
+    t = g_t
+    sy,sx = [3,3] if t == 0 else [3,3] if t == 1 else [4,4]
+    si = sy * sx
+    fx = {i:0 for i in range(18 if t == 1 else si)}
+    fxli = lambda li,n: fx.update({i:n for i in li})
+    cache = {}
+    res = []
+    if t == 0:
+        leaf = '123456700'
+        src(1,m,leaf,-1,-1)
+    if t == 1:
+        global v1,v2,v3
+        v1,v2,v3 = a
+        src(2,m)
+    if t == 2:
+        leaf,=a
+        li = [i for i in [0,3,12,15] if m[i] != 'x']
+        hd,hdr = [],{}
+        leaf1 = list(leaf[:])
+        for i in li:
+            pk = leaf1[i]
+            if pk == '0':
+                r = src(-3,leaf1,i,hd)
+                pk = leaf1[r[-1]]
+                hd.append(i)
+                hdr[i] = r
+                leaf1[r[-1]],leaf1[i] = '0',pk
+            m = src(1,m,''.join(leaf1),i,pk)
+            fx[i] = 1
+        m = src(1,m,''.join(leaf1),-1,-1)
+        for i in hd[::-1]:
+            res.append([hdr[i],int(m[i])])
+    return res
 
 def ts(ad,val=[],y=1,x=1):
     ser = serial_open(port='COM')
@@ -20,7 +200,7 @@ set_tool('tool')
 set_velx(1500); set_accx(2500); set_velj([100,150,180,225,225,225]); set_accj(400)
 begin_blend(25)
 ml,mj,aml,amj,mjx = movel,movej,amovel,amovej,movejx
-H = 270
+H = 370
 def up(p,mod=0,h=-1):
     p,h = p[:],h if h != -1 else H
     p[2] = p[2] + h if mod else h
@@ -41,10 +221,9 @@ def grip(n):
         if not n:
             wait(0.1)
         ts(40,n)
-        wait(0.2)
     else:
         set_tool_digital_outputs([1,-2] if n else [-1,2])
-        wait(0.25)
+    wait(0.25)
 itli = [0,1,2,3,4,5,6,7]
 def it(n,t=0.6,mod=0):
     global itli
@@ -53,59 +232,54 @@ def it(n,t=0.6,mod=0):
     ts(10,n)
     wait(t * abs(n))
     itli = itli[-n:] + itli[:-n]
-    return t * abs(n)    
-gp = 4.5
-def gt(n,t=3):
-    global gp
-    if n == gp:
-        return -1
+    return t * abs(n)
+def gt(n,t=0.5):
     ts(20,n)
-    wait(t *  abs(gp - n))
-    n1 = 0.1 * abs(gp - n)
+    wait(t)
     gp = n
-    return n1
 
-def ps(p,ad,y,x,sy=40,sx=40):
+def ps(p,ad,y,x,z=1,sy=40,sx=40,sz=40):
     pos = {}
-    for i in range(y * x):
-        pos[i] = [trans(p[j],[-sx*(i%x),sy*(i//x),0,0,0,0]) for j in [0,1]] + [ad + i]
+    size = y * x
+    for i in range(size * z):
+        nz = i // size
+        ny = (i % size) // x
+        nx = i % x
+        pos[i] = [trans(p[tool],[-sx*nx,sy*ny,sz*nz,0,0,0]) for tool in [0,1]] + [ad + i]
     return pos
-# 3D
-# def ps(p,ad,y,x,z,sy=40,sx=40,sz=60):
-#     pos = {}
-#     size = y * x
-#     for i in range(size * z):
-#         nz = i // size
-#         ny = (i % size) // x
-#         nx = i % x
-#         pos[i] = [trans(p[tool],[-sx*nx,sy*ny,sz*nz,0,0,0]) for tool in [0,1]] + [ad + i]
-#     return pos
-A = ps([None,None],100,4,4)
-B = ps([None,None],200,4,4)
-C = ps([None,None],300,4,4)
-IT = {0:[None,-1,5]}
-GT = {0:[None,-1,50]}
+A = ps([posx(35.64, 503.37, 247.11, 179.86, 90, 90.01),[0]*6],100,3,1)
+B = ps([posx(-185.41, 364.15, 226.46, 0.03, -90, -90),[0]*6],200,3,3,2)
+C = ps([posx(348.31, 424.21, 227.68, 179.93, -90.03, -90.04),posx(348.82, 424.74, 136.96+60, 179.87, -90, 90)],300,4,4)
+IT = {0:[posx(298.13, 288.14, 297.61, 179.84, -89.95, -90),posx(298.13, 288.62, 265.16, 179.56, -90.02, 89.97),5]}
+A[0][0] = trans(A[0][0],[0,0,-2,0,0,0])         # ERR
+A[1][0] = trans(A[1][0],[0,0,-1,0,0,0])           # ERR
 
-def z(pos,pk):
-    li = [[],[]] if pos == A else [[],[]] if pos == B else [[],[]]
-    return 0 if not tool else 20 if pk in li[0] else 10 if pk in li[1] else 0 
-def mt1(pos,n,p,pk,add=0):
-    tp = trans(pos[p][tool],[0,0,-z(pos,pk),0,0,0])
-    m,h = [0,-1] if n == 1 else [1,3]
-    ml(up(tp,m,h),a = 2500 + add,r = 25 if n else 1)
+def mt1(pos,n,p,pk,b1=0,ad=0,add=0):
+    tp = trans(pos[p][tool],[0,0,-10 if pos==C and tool and pk > 4 else 0,0,0,0])
+    m,h = [0,-1] if n == 1 or pos in [B,IT] else [1,3]
+    if not b1:
+        ml(up(tp,m,h),a=1800 + add,r=25 if n else 1)
     if n < 2:
-        ml(tp,a=2500 if n else 800,r=[1,5][n])
+        ml(tp,a=2500 if n or pos in [B,IT] else 800,r=5 if n else 1)
+        if not n and pos==A:
+            ml([0,0,-0.2,0,0,0],mod=1)
         grip(n)
-        ts(pos[p][2],0 if n else pk)
-        m,h = [1,3] if n else [0,-1]
-        ml(up(tp,m,h),a=800 if n else 2500)
+        ts(ad if ad else pos[p][2],0 if n else pk)
+        b = n and pos not in [B,IT]
+        m,h = [1,3] if b else [0,-1]
+        ml(up(tp,m,h),a=800 if b else 2500)
         
 def Run(pos,res):
     for i in range(len(res)):
         r,pk = res[i]
         n = len(r)
         li = [r[1]-r[0]]
-        ct = 0
+        ct = 0        
+        if pos == C:
+            cht(pk < 5)
+            it(idx.index(pk))
+            mt1(IT,1,0,pk)
+            cht(not pk < 5)
         mt1(pos,1,r[0],pk)
         for i in range(1,n):
             if i < n - 1:
@@ -115,16 +289,41 @@ def Run(pos,res):
                 if skip:
                     ct += 1
                     continue
-            mt1(pos,1 if not i else 0 if i == n-1 else 2,r[i],pk,1000 * ct)
+            mt1(pos,1 if not i else 0 if i == n-1 else 2,r[i],pk,add = 800 * ct)
             ct = 0
+        if pos == C:
+            cht(pk < 5)
+            mt1(IT,0,0,pk)
+            
+def RunA(pos,res):
+    y,x = 0,0
+    ml(up(pos[0][0]))
+    for li in res:
+        r,pk = li
+        for i in range(len(r)):
+            p = r[i]
+            y1,x1 = divmod(p,3)
+            if y != y1:
+                ml(up(pos[y1][0],[0,1][bool(i)],[-1,5][bool(i)]),a=1500)                
+            if x != x1:
+                mwait(0)
+                gt(x1 + 1,t = 0.6 * abs(x1 - x))
+            if not i:
+                mt1(pos,1,y1,pk,1,100+p)
+            if i == len(r)-1:      
+                mt1(pos,0,y1,pk,1,100+p)
+            y,x = y1,x1
+
 
 def wt_init():
     for i in range(3):
-        li = [[],
-              [],
-              []][i]
+        li = [[4,7,1,6,2,0,5,0,3],
+              [1,1,1,0,0,2,2,2,1,1,2,0,0,0,2,2,0,1,1,2,0,1,3,3,3,0,2,1,1,2,2,2,2,2,1,2,2,2,2],              
+              [1,0,3,0,0,5,9,0,0,8,0,2,6,4,7,0,8,5,0,0,0,1,9,4,2,7,6,0,0,0,3,0]][i]
         for ad,val in enumerate(li):
             ts((100*(1+i))+ad,val)
+    for ad,val in enumerate([1,2,6,4,3,8,5,7]):
+        ts(1+ad,val)
 wt_init()       # temp
 
 ts(30,1)        # buzz
@@ -134,26 +333,31 @@ time_start = time.time()        # temp
 def cvt(li):
     di = {9:'x',10:'0',11:'0'}
     return ''.join([di[i] if i in di else str(i) for i in li])
-root,leaf,info = [-1]*4,[-1]*4,[-1]*4
-for i in range(3):
-    y,x = [4,4] if i < 2 else [5,5]
-    li = ts([100,200,300][i],[],y,x)
-    info[i] = [i for i in range(y*x) if li[i] > 9]
-    root[i] = cvt(li)
+root,leaf,info = [-1]*3,[-1]*3,[-1]*3    
+root[0] = cvt(ts(100,[],3,3))
+root[1] = cvt(ts(200,[],9,2))
+info[1] = list(map(cvt,[ts(218,[],3,3),ts(227,[],2,3),ts(233,[],2,3)]))
+root[2] = cvt(ts(300,[],4,4))
+leaf[2] = cvt(ts(316,[],4,4))
 
-ress = [None,
-        None,
-        None]
+ress = [[[[6, 7], 5], [[8, 5], 3], [[7, 8], 5], [[3, 6, 7], 6], [[0, 3], 4], [[1, 0], 7], [[2, 1], 1], [[5, 2], 3], [[8, 5], 5], [[7, 8], 6], [[3, 6], 4], [[0, 3], 7], [[1, 0], 1], [[4, 1], 2], [[3, 4, 7], 7], [[5, 4], 5], [[8, 5], 6], [[6, 3], 4], [[7, 6], 7]],
+        [[[17, 16, 4], 1], [[7, 13], 2], [[9, 3], 1], [[8, 7], 1], [[13, 16, 8], 2], [[7, 13, 12], 1], [[10, 13], 2], [[14, 11], 2], [[5, 17], 2], [[1, 9], 1], [[11, 1], 2], [[2, 5], 1], [[17, 14], 2], [[13, 10], 2], [[15, 7, 17], 2], [[6, 7, 13], 2], [[12, 6], 1], [[17, 7, 15], 2]],
+        [[[0, 4, 8], 1], [[5, 4], 5], [[9, 5, 1, 0], 8], [[2, 1, 5, 9, 10], 3], [[13, 9, 5, 1, 2, 3], 4], [[12, 13, 9, 5, 1, 2], 6], [[14, 13, 9], 7], [[11, 15, 14, 13, 12], 2], [[10, 11, 15], 3], [[9, 13], 7], [[2, 1, 5, 9, 10], 6], [[4, 5, 1], 5], [[8, 4, 5], 1], [[13, 9], 7], [[15, 14], 3], [[12, 8], 2], [[3, 7], 4]]]
 #ress = [-1]*3
-# for i in range(3):
-#     ress[i] = main(i,root[i],leaf[i],info[i])
-#     tl(i,'done!!!')
+#ress[0] = main(0,root[0]); tl(0,'done!!!')
+#ress[1] = main(1,root[1],*info[1]); tl(1,'done!!!')
+#ress[2] = main(2,root[2],leaf[2]); tl(2,'done!!!')
 
 grip(0)
 mj([90,0,90,90,-90,0])
-Run(A,ress[0])
-Run(B,ress[1])
+idx = ts(1,[],1,8)
 Run(C,ress[2])
+mj([90,0,90,90,90,0])
+tool = 0
+H = 300
+RunA(A,ress[0])
+H = 340
+Run(B,ress[1])
 
 ts(30,1)        # buzz
 time_end = time.time() - time_start         # temp
