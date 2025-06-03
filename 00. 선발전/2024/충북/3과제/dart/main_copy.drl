@@ -173,7 +173,7 @@ set_tool('tool')
 set_velx(1500); set_accx(2500); set_velj([100,150,180,225,225,225]); set_accj(400)
 begin_blend(25)
 ml,mj,aml,amj,mjx = movel,movej,amovel,amovej,movejx
-H = 320
+H = 350
 def up(p,mod=0,h=-1):
     p,h = p[:],h if h != -1 else H
     p[2] = p[2] + h if mod else h
@@ -186,6 +186,7 @@ def cht(n=-1,t=0.6):
     tool = (1 - tool)
     amj([0,0,0,0,0,180 if tool else -180],a=1500,mod=1)
     wait(t)
+    mwait(0)
 isgrip = 0
 def grip(n):
     global isgrip
@@ -220,36 +221,43 @@ A = ps([posx(47.56, 283.33, 226.81, 0.14, 90.02, 90.05),[0]*6],100,5,5)
 B = ps([posx(377.54, 283.3, 228.17, 179.7, -90, -90),posx(378.5, 284.09, 135.95+60, 0.01, 90, -90)],200,5,5)
 C = ps([posx(-275.13, 282.96, 227.15, 179.85, 90, 90.01),[0]*6],300,5,5)
 IT = {0:[-1, posx(417.71, 187.51, 264.84, 179.81, -90, 90),5]}
-GT = {0:[posx(137.85, 540.22, 246.92, 0.32, 90, 90),-1,50],
+GT = {0:[posx(127, 540.22, 246.87, 0.32, 90, 90),-1,50],
       1:[posx(-166.54, 540.23, 247.66, 0.01, -90, -90),-1,50]}
-      
-def z(pk):
-    pk %= 10
-    return -(20 if pk in [7,8] else 10) if tool else 0
-    
-def mt1(pos,n,p,pk,b=0,add=0):
-    tp = trans(pos[p][tool],[0,0,z(pk),0,0,0])
-    mh = [[0,-1],[0,-1]] if b else [[1,3],[0,-1]]
-    a = [1500 if pos == IT else 3000]*2 if b else [800,2500]
-    if n == 1:
-        mh,a = mh[::-1],a[::-1]
-    ml(up(tp,*mh[0]),a=2500 + add,r=25 if n else 1)
-    if n < 2:
-        ml(tp,a=a[0],r=5 if n else 1)
-        grip(n)
-        ts(pos[p][2],0 if n else pk)
-        ml(up(tp,*mh[1]),a=a[1])
 
-def Run(pos,res):
+def z(pos,pk):
+    pk %= 10
+    li = [[],[]] if pos == A else [[7,8],[1,2,3,4,5,6]] if pos == B else [[],[]]
+    return 0 if not tool else 20 if pk in li[0] else 10 if pk in li[1] else 0 
+    
+def mt1(pos,n,p,pk,add=0):
+    tp = trans(pos[p][tool],[0,0,-z(pos,pk),0,0,0])
+    m,h = [0,-1] if n == 1 else [1,3]
+    ml(up(tp,m,h),a=2500 + add,r=25 if n else 1)
+    if n < 2:
+        ml(tp,a=2500 if n else 800,r=5 if n else 1)
+        grip(n)
+        ts(pos[p][2],pk + (10 if pk and pos == C else 0))
+        m,h = [1,3] if n else [0,-1]
+        ml(up(tp,m,h),a=800 if n else 2500)
+        
+def mt2(pos,n,p,pk,b=1):
+    tp = trans(pos[p][tool],[0,0,-z(pos,pk),0,0,0])
+    if b:
+        ml(up(tp))
+    ml(tp,a=4000)
+    grip(n)
+    ts(pos[p][2],pk)
+    ml(up(tp))
+        
+def Run(t):
     cht(0)
+    pos,res = [A,B,C][t],ress[t]
     for i in range(len(res)):
         r,pk = res[i]
-        if pos == C:
-            pk += 10
         n = len(r)
         li = [r[1]-r[0]]
         ct = 0
-        mt1(pos,1,r[0],pk)
+        mt1(pos,1,r[0],0)
         for i in range(1,n):
             if i < n - 1:
                 dire = r[i+1] - r[i]
@@ -258,7 +266,7 @@ def Run(pos,res):
                 if skip:
                     ct += 1
                     continue
-            mt1(pos,1 if not i else 0 if i == n-1 else 2,r[i],pk,add=1000 * ct)
+            mt1(pos,1 if not i else 0 if i == n-1 else 2,r[i],pk,1000 * ct)
             ct = 0
 
 def wt_init():
@@ -299,45 +307,44 @@ None,
 
 grip(0)
 mj([90,0,90,90,-90,0])
+
 idx = ts(1,[],1,8)
-it(idx.index(11))
+it(idx.index(11),mod=0)
 cht(1)
 mjx(up(IT[0][tool]),sol=3)
 for pk in range(1,9):
-    mt1(IT,1,0,pk+10,1)
-    aml([0,100,0,0,0,0],mod=1)
-    cht(0)
+    mt2(IT,1,0,0,pk>1)
     if pk < 8:
-        it(idx.index(pk + 11),0)
+        it(idx.index(pk + 11),0,0)
     p1 = root[1].index(str(pk))
-    mt1(B,1,p1,pk,1)    
-    p2 = root[0].index(str(pk))
-    mt1(A,0,p2,pk,1)
     ml(up(B[p1][tool]))
+    cht(0)
+    mt2(B,1,p1,0)
+    p2 = root[0].index(str(pk))
+    mt2(A,0,p2,pk)
     cht(1)
-    mt1(B,0,p1,pk+10,1)
+    mt2(B,0,p1,pk+10)
 H = 270
-Run(A,ress[0])
+Run(0)
 
-H = 320
+ml([0,0,100,0,0,0],mod=1)
+H = 370
 gt(1,0)
 for pk in range(1,9):
     p1 = root[1].index(str(pk))
     if pk > 1:
         amj([90,0,90,90,-90,0])
         wait(0.5)
-    mt1(B,1,p1,pk+10,1)
-    mt1(GT,0,0,pk+10,1)
+    mt2(B,1,p1,0)
+    mt2(GT,0,0,pk+10)
     gt(2)
-    mj([0,0,0,0,180,-50],mod=1)
-    mt1(GT,1,1,pk+10,1)
+    mj([0,0,0,0,180,-40],mod=1)
+    mt2(GT,1,1,0)
     gt(1,0)
-    mt1(C,0,pk-1,pk+10,1)
-H = 270
-Run(C,ress[2])
+    mt2(C,0,pk-1,pk+10)
+Run(2)
 
-
-ts(30,1)        # buzz
+#ts(30,1)        # buzz
 time_end = time.time() - time_start         # temp
 minute,second = int(time_end // 60),int(time_end % 60)         # temp
 tl('{}m {}s\n'.format(minute,second))         # temp

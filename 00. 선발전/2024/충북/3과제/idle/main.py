@@ -1,6 +1,7 @@
 from time import time
 from Tool.Printer import *
-from queue import *
+from queue import PriorityQueue
+from collections import deque
 
 def exc(m,s,e,r):
     m = list(m)
@@ -23,81 +24,68 @@ def aro(pos):
 
 def exp(n,m,p=-1):
     res = []
-    for i in range(size) if n > 0 else [p]:
-        if fx[i] or m[i] == 'x' or (n > 0 and m[i] == '0'):
-            continue
-        di = src(-1,m,i,-1) if n > 0 else aro(i)
-        for j in di:
-            if j == i or fx[j] or m[j] == 'x' or (n == -1 and m[j] != '0'):
-                continue
-            if t == 0 and n > 0 and j in hli:
-                continue
-            res.append(exc(m,j,i,di[j]) if n > 0 else [j,j])        
+    di1,di2 = {},{}
+    for i in range(si):
+        if not fx[i] and m[i] != 'x':
+            if m[i] != '0':
+                di1[i] = i
+            if m[i] == '0' or n < 1:
+                di2[i] = i
+    if n < 1:
+        return [[i,i] for i in aro(p) if i in di2]
+    for i in di1 if n > 0 else [p]:
+        q = [i]
+        r = {i:[di1[i]]}
+        for cur in q:
+            for j in aro(cur):
+                if j in q or j not in di2:
+                    continue
+                q.append(j)
+                r[j] = r[cur] + [di2[j]]
+                if j not in hli:
+                    res.append(exc(m,di2[j],di1[i],r[j]))
     return res
 
-mkdCt = 0
+visited = 0
 def src(n,m,*a):
-    global res,mkdCt
+    global res
+    global visited       # temp
     if n < 1:
         s,e = a
-        if n == 0 and (s,e) in cache:
-            return cache[(s,e)]
+        if n == 0 and (n,s,e) in cache:
+            return cache[n,s,e]
     if n == 1:
-        leaf,p,pk = a
+        leaf,p,pk = a    
     cur = m if n > 0 else s
-    q = PriorityQueue() if n > 0 else []
+    q = PriorityQueue() if n > 0 else deque([])
     mkd = {cur:[cur]}
-    g = {cur:0}
-    def heu(m):
+    g = {cur:0}    
+    def heu0(m):
         ct = 0
         if p != -1:
-            s,e = m.index(pk),leaf.index(pk)
-            r1 = src(0,m,s,e)
-            ct += len(r1)
-            ct += 10 * len([i for i in r1 if m[i] not in '0'+pk])
-            r2 = src(-2,m,p,-1)
+            rp = len([i for i in src(0,m,m.index(pk),p) if m[i] not in '0'+pk])
+            ct += 10000 * rp
+            r2 = src(-1,m,p,-1)
             isDead = len(r2) > 1
-            # if isDead:
-            #     for i in range(len(r2)-1,-1,-1):
-            #         i = r2[i]
-            #         if m[i] not in '0':
-            #             ct += 10000 * len(src(0,m,i,p))
-            # li = [i in r2 and m[i] not in '0'+pk for i in r1[1:]]
-            # if isDead and li and any(li):
-            #     ct += 100
-        for i in range(size):
+        for i in range(si):
             if m[i] not in '0x':
-                # 길찾기 ver
-                dst = len(src(0,m,i,leaf.index(m[i]) if p == -1 else p))
-                 
-                # 맨해튼 ver
-                # y1,x1 = divmod(i,sx)
-                # y2,x2 = divmod(leaf.index(m[i]) if p == -1 else p,sx)
-                # dst = (abs(y1 - y2) + abs(x1 - x2)) + 1
-                
-                ct += (dst if p == -1 else (1000 * (size - dst) if isDead and i in r2 else -dst))
-
-        if p != -1 and p in src(-1,m,s,-1):
-            ct = -99999 * (2 if m[p] == pk else 1)
-
-        # print('ct ->',ct)
-        # print(p,pk)
-        # prt(m,5,5)
-        # input()
-
+                y1,x1 = divmod(i,sx)
+                y2,x2 = divmod(p if p!=-1 else leaf.index(m[i]),sx)
+                dst = (abs(y1 - y2) + abs(x1 - x2)) + 1
+                ct += (100 * (si - dst) if isDead and i in r2 else -dst) if p != -1 else dst ** 2
+        if p != -1 and not rp:
+            ct = -2 ** (30 if m[p] == pk else 20)
         return ct
-    put = lambda cur: q.put((g[cur] + heu(cur), cur)) if n > 0 else q.append(cur)
-    get = lambda : q.get()[1] if n > 0 else q.pop(0)
+    put = lambda cur: q.put((g[cur] + heu0(cur), cur)) if n > 0 else q.append(cur)
+    get = lambda : q.get()[1] if n > 0 else q.popleft()
     put(cur)
     while 1:
-        if n == -2 and len(q) > 1:      # default
+        if n == -1 and len(q) > 1:      # default
             break
-        if n in [0,-1] and not q:      # default
-            return mkd
         cur = get()
-        if n > 0:
-            mkdCt += 1
-        if n == -3 and m[cur] not in e + ['0']:
+        if n > 0:      # temp
+            visited += 1
+        if n == -2 and m[cur] != '0' and cur not in e:
             break
         if n == 0 and cur == e:
             break
@@ -114,26 +102,31 @@ def src(n,m,*a):
         res += res1[1:]
         return cur
     if n == 0:
-        cache[(s,e)] = res1
+        cache[n,s,e] = res1
     return res1
 
 def main(g_t,m,*a):
-    global t,sy,sx,size,fx,fxli,cache,res
+    global t,sy,sx,si,fx,fxli,cache,res
     t = g_t
     sy,sx = [5,5]
-    size = sy * sx
-    fx = {i:0 for i in range(size)}
+    si = sy * sx
+    fx = {i:0 for i in range(si)}
     fxli = lambda li,n: fx.update({i:n for i in li})
     cache = {}
     res = []
     if t == 0:
         global hli
         leaf,hli = a
-        li = [[0,5,10,15,20,1,6,11,16,21,],[4,9,14,19,24,3,8,13,18,23]]
-        li = min(li,key = lambda li:[m[i] for i in li].count('x'))
-        for i,j in [[0,5],[5,10]]:
-            li[i:j] = sorted(li[i:j],key = lambda i:len(exp(0,m,i)))
-        li = [i for i in li+[2,7,12,17,22] if len(exp(0,m,i)) == 1] + li
+        seq = [i for i in range(si) if len(exp(0,m,i)) == 1]
+        li = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]
+        if [m[i] for i in li].count('x') == 2:
+            li = [20,21,22,23,24,15,16,17,18,19,10,11,12,13,14]
+        for i in range(0,16,5):
+            fxli(seq,1)
+            li1 = li[0+i:5+i]
+            seq += sorted(li1,key=lambda i:len(exp(0,m,i)))
+        fxli(seq,0)
+        seq = [i for i in seq if i not in hli and m[i] != 'x'][:5]
     if t == 2:
         hli = []
         leaf = list(m)
@@ -147,27 +140,22 @@ def main(g_t,m,*a):
                 leaf[i] = str(ct)
                 ct += 1
         leaf = ''.join(leaf)
-        li = [20,21,22,23,24]
+        seq = [20,21,22,23,24]
     hd,hdr = [],{}
     leaf1 = list(leaf[:])
-    for i in li:
-        if len([i for i in fx if fx[i] if m[i] != '0']) > 5:
-            break
-        if m[i] == 'x' or i in hli or fx[i]:
-            continue
-        fxli([i for i in hli if len(exp(0,m,i)) == 1],1)
+    for i in seq:
         pk = leaf1[i]
         if pk == '0':
-            r = src(-3,leaf1,i,hd)
+            r = src(-2,leaf1,i,hd)
             pk = leaf1[r[-1]]
-            hd.append(pk)
-            hdr[pk] = r
-            leaf1[r[-1]],leaf1[i] = '0',pk            
+            hd.append(i)
+            hdr[i] = r
+            leaf1[r[-1]],leaf1[i] = '0',pk
         m = src(1,m,''.join(leaf1),i,pk)
         fx[i] = 1
     m = src(1,m,''.join(leaf1),-1,-1)
     for i in hd[::-1]:
-            res.append([hdr[i],int(i)])
+        res.append([hdr[i],int(m[i])])
     return res
 
 if __name__ == '__main__':
@@ -179,8 +167,6 @@ if __name__ == '__main__':
     res = main(t,m1,m2,hli) if t == 0 else main(t,m)
     te = time() - ts
     print(res)
-    # for i in res:
-    #     print(i)
-    print('visited :',mkdCt)
+    print('visited :',visited)
     print("{}step, idle {}s(DART-Studio {}m {}s) \n".format(len(res),round(te,3),int((te*250)//60),int((te*250)%60)))
 

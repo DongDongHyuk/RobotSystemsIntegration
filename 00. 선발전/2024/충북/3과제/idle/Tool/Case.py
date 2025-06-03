@@ -17,6 +17,8 @@ class Case:
     def __init__(self,Type):
         self.Type = Type
         Case.ct += 1
+        if not Case.ct % Case.prograssLimit:
+            self.progress()
         self.ct = Case.ct
 
         self.rdm = randomMap(Type)
@@ -67,7 +69,7 @@ class Case:
         print(st + ' {}steps, {}s(dart {}m {}s)'.format(Step,Time,m,s))
         print(st + '')
 
-    def status():
+    def status(self):
         isFail = Case.failCase != None
         print(' >>>\n')
         print(' Result ->','Failed({})'.format(Case.failCase.err) if isFail else 'Completed')
@@ -81,5 +83,10 @@ class Case:
             Case.maxStepCase.info()
             print(' [ Max Time ]')
             Case.maxTimeCase.info()
+
+    def progress(self):
+        n = (Case.ct/Case.limit)*100
+        per = (int(n)//10)
+        print(' '+'■'*per+'□'*(10-per)+''+' {}% ({}/{})'.format(round(n,4),Case.ct,Case.limit))
 
 

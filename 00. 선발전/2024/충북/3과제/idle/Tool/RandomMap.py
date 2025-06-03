@@ -32,5 +32,5 @@ def randomMap(t):
 # prt(m1,5,5)
 # prt(m2,5,5)
 
-m = randomMap(2)
-prt(m,5,5)
+# m = randomMap(2)
+# prt(m,5,5)
