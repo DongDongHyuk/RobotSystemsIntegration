@@ -1,5 +1,3 @@
-from time import time
-from Tool.Printer import *
 from queue import PriorityQueue
 from collections import deque
 
@@ -84,16 +82,15 @@ def src(n,m,*a):
             rp = len([i for i in src(0,m,m.index(pk),p) if m[i] not in '0'+pk])
             ct += 10000 * rp
             r2 = src(-1,m,p,-1)
-            if len(r2) > 1:
-                for i in range(len(r2)):
-                    if m[r2[::-1][i]] not in '0'+pk:
-                        ct += 100 * (1+i)
-            if not rp:
-                ct = -2 ** (30 if m[p] == pk else 20)
-        else:
-            for i in range(si):
-                if not fx[i] and m[i] not in '0x':                
-                    ct += len(src(0,m,i,p if p!=-1 else leaf.index(m[i])))
+            isDead = len(r2) > 1
+        for i in range(si):
+            if m[i] not in '0x':
+                y1,x1 = divmod(i,sx)
+                y2,x2 = divmod(p if p!=-1 else leaf.index(m[i]),sx)
+                dst = abs(y1 - y2) + abs(x1 - x2)
+                ct += (100 * (si - dst) if isDead and i in r2 else -dst) if p != -1 else dst
+        if p != -1 and not rp:
+            ct = -2 ** (30 if m[p] == pk else 20)
         return ct
     def heu2(m):
         ct = 0
@@ -180,16 +177,3 @@ def main(g_t,m,*a):
         Pk1,Pk2 = St[:-4],St[-4:]       # 사각팩, 원형팩
         src(2,m,leaf)
     return res
-
-if __name__ == '__main__':
-    t,m1,m2,hli = 0,'00025x704163','37200x406150',[7]
-    # t,m1,m2 = 1,'51206743','54321076'
-    # t,m1,m2 = 1,'465x1273','156x3742'
-
-    ts = time()
-    res = main(t,m1,m2,hli) if t==0 else main(t,m1,m2)
-    te = time() - ts
-    print(res)
-    print('visited :',visited)
-    print("{}step, idle {}s(DART-Studio {}m {}s) \n".format(len(res),round(te,3),int((te*250)//60),int((te*250)%60)))
-

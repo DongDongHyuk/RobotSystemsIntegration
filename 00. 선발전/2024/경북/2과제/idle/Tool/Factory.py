@@ -15,7 +15,7 @@ def factory():
     Case.status()
 
 t = 3
-limit = 100
+limit = 1000
 
 Case.printStyle = " [{}] | {},'{}'" if t != 2 else " [{}] | {},'{}',{}" # .format(ct, t, m1, *args)
 try:

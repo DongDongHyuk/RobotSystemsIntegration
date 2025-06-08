@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "name": "Launch",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${fileDirname}",
+            "suppressMultipleSessionWarning": true
+        }
+    ]
+}

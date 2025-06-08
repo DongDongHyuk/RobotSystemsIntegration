@@ -1,0 +1,56 @@
+
+[ A 변형 X ]
+ Result -> Completed
+ Loop in 10000000 times
+ Avg: 13step/0.00215s(dart 0m 0s)
+
+ [ Max Step ]
+ [1535874] | 0,'610375400020','030500720164'    
+ 26steps, 0.00452s(dart 0m 1s)
+
+ [ Max Time ]
+ [9355216] | 0,'020340750601','010620370540'    
+ 20steps, 0.04478s(dart 0m 11s)
+
+[ A default ]
+ Result -> Completed
+ Loop in 1000000 times
+ Avg: 16step/0.00204s(dart 0m 0s)
+
+ [ Max Step ]
+ [218820] | 0,'32075x401600','41230x076500',[11]
+ 58steps, 0.00695s(dart 0m 1s)
+
+ [ Max Time ]
+ [105764] | 0,'10064x700523','75634x120000',[8]
+ 19steps, 0.03128s(dart 0m 7s)
+
+[ A 맨헤튼 -> 길찾기 + 멀리 멀리 없는거(isDead는 그대로) ]
+
+
+
+[ IT 변형 X ]
+ Result -> Completed
+ Loop in 1000000 times
+ Avg: 11step/0.00078s(dart 0m 0s)
+
+ [ Max Step ]
+ [4463] | 1,'13270546','63512740'
+ 26steps, 0.00204s(dart 0m 0s)
+
+ [ Max Time ]
+ [574832] | 1,'54237160','16052473'       
+ 14steps, 0.02592s(dart 0m 6s)
+
+[ IT ]
+ Result -> Completed
+ Loop in 1000000 times
+ Avg: 14step/0.00332s(dart 0m 0s)
+
+ [ Max Step ]
+ [496728] | 1,'465x1273','156x3742'
+ 46steps, 0.0144s(dart 0m 3s)
+
+ [ Max Time ]
+ [742599] | 1,'42x67513','43x56172'
+ 28step, 0.037s(dart 0m 9s)
