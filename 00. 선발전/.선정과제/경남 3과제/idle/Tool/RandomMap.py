@@ -5,8 +5,9 @@ def randomMap(t):
     res = []
     if t == 0:
         x = cs(range(12),c([0,1]))
+        x = []
         h = cs([i for i in range(12) if i not in x],c([0,1]))
-        h=[]
+        h = []
         for i in range(2):
             m = ['x' if i in x else '0' for i in range(12)]
             for pk in '1234567':
@@ -16,6 +17,7 @@ def randomMap(t):
     if t == 1:
         x = cs(range(8),c([0,1]))
         st = '12345678'[:c([7,8-len(x)])]
+        x,st = [],'1234567'
         for i in range(2):
             m = ['x' if i in x else '0' for i in range(8)]
             for pk in st:

@@ -42,11 +42,13 @@ def exp(n,m,p=-1):
     di1,di2 = {},{}
     for i in range(si):
         if not fx[i] and m[i] != 'x':
-            if n < 1 or m[i] != '0':
+            if m[i] != '0' or n < 1:
                 di1[i] = i
-            if n < 1 or m[i] == '0':
+            if m[i] == '0' or n < 1:
                 di2[i] = i
     for i in di1 if n > 0 else [p]:
+        if n == -2 and m[i] != '0':
+            continue
         q = deque([i])
         r = {i:[di1[i]]}
         while q:
@@ -64,76 +66,91 @@ def exp(n,m,p=-1):
 
 visited = 0
 def src(n,m,*a):
-    global res
-    global visited       # temp
+    global res, visited       # temp
     if n < 1:
         s,e = a
-        if n == 0 and (n,s,e) in cache:
+        if n in [0,-1] and (n,s,e) in cache:
             return cache[n,s,e]
     if n == 1:
         leaf,p,pk = a
-    if n == 2:
-        leaf, =a
+    # if n == 2:
+    #     leaf,li = a
+    #     p = -1
+    if n == 3:
+        leaf,li = a
     cur = m if n > 0 else s
     q = PriorityQueue() if n > 0 else deque([])
     mkd = {cur:[cur]}
     g = {cur:0}    
-    def heu1(m):
+    def h1(m):
         ct = 0
         if p != -1:
-            rp = len([i for i in src(0,m,m.index(pk),p) if m[i] not in '0'+pk])
-            ct += 10000 * rp
+            r = src(0,m,m.index(pk),p)[1:]
+            ct += len(r)
+            ct += 100 * len([i for i in r if m[i] not in '0'+pk])
             r2 = src(-1,m,p,-1)
             if len(r2) > 1:
-                for i in range(len(r2)):
-                    if m[r2[::-1][i]] not in '0'+pk:
-                        ct += 100 * (1+i)
-            if not rp:
-                ct = -2 ** (30 if m[p] == pk else 20)
+                if m[r2[1]] == pk and m[r2[0]] != '0':
+                    ct += 10000
         else:
             for i in range(si):
-                if not fx[i] and m[i] not in '0x':                
-                    ct += len(src(0,m,i,p if p!=-1 else leaf.index(m[i])))
+                if not fx[i] and m[i] not in '0x':
+                    y1,x1 = divmod(i,sx)
+                    y2,x2 = divmod(leaf.index(m[i]),sx)
+                    ct += abs(y1 - y2) + abs(x1 - x2)        
         return ct
-    def heu2(m):
+    def h3(m):
         ct = 0
-        for pk in [i for i in leaf if i != '0']:
-            if pk in m:
-                for i in range(1,8):
-                    if m[(m.index(pk)+i)%8] == leaf[(leaf.index(pk)+i)%8] != '0':
-                        ct -= 100
+        li = [0,1,2,3,4,5,6,7]
+        for pk in Pk1+Pk2:
+            p2 = leaf.index(pk)
+            if pk in m:       # 사용 그리퍼 1~2 개
+                p1 = m.index(pk)
+                if 'x' in m:        # 고정팩 0~1 개
+                    n = m.index('x') - leaf.index('x')
+                    p1 = m.index(pk)
+                    if p1 == (p2+n)%8:
+                        ct -= 10000
+                else:
+                    n1,n2 = li.index(p1),li.index(p2)
+                    st1 = [m[i] for i in li[n1:]+li[:n1]]
+                    st2 = [leaf[i] for i in li[n2:]+li[:n2]]
+                    for i in range(len(st1)):
+                        if st1[i] == st2[i]:
+                            ct -= 10000
+            else:
+                ct -= 100
         return ct
-    put = lambda cur: q.put((g[cur] + (heu2 if n == 2 else heu1)(cur), cur)) if n > 0 else q.append(cur)
+    put = lambda cur : q.put((g[cur]+(h3 if n==3 else h1)(cur), cur)) if n > 0 else q.append(cur)
     get = lambda : q.get()[1] if n > 0 else q.popleft()
     put(cur)
     while 1:
-        if n == -1 and len(q) > 1:      # default
+        if n == -1 and len(q) > 1:      # isDead
             break
         cur = get()
         if n > 0:      # temp
             visited += 1
-        if n == -2 and m[cur] != '0' and cur not in e:
+        if n == -2 and m[cur] != '0' and cur not in e:      # 땡기기
             break
-        if n == 0 and cur == e:
+        if n == 0 and cur == e:         # 길찾기
             break
-        if n == 1:
+        if n == 1:      # 정렬
             if (p == -1 and cur == leaf) or (p != -1 and cur[p] == pk):
                 break
-        if n == 2:
-            ct = 8 - Ct
-            H = -100 * ((ct-1)*ct)
-            if heu2(cur) == H:       # -100 * (팩 개수 - 1 * 팩 개수)
+        if n == 3:      # 뺑뺑이
+            if 'x' in cur and h3(cur) == -10000*len(Pk1+Pk2):
+                break
+            if 'x' not in cur and h3(cur) == -10000*8*(8-Ct):
                 break
         for i,j in exp(n,cur if n > 0 else m,cur):
             if i not in mkd:
-                mkd[i] = mkd[cur] + [j]
-                g[i] = g[cur] + 1
+                mkd[i],g[i] = mkd[cur]+[j],g[cur]+1
                 put(i)
     res1 = mkd[cur]
     if n > 0:
         res += res1[1:]
         return cur
-    if n == 0:
+    if n in [0,-1]:
         cache[n,s,e] = res1
     return res1
 
@@ -147,16 +164,19 @@ def main(g_t,m,*a):
     cache = {}
     res = []
     if t == 0:
-        global hli      # hole
-        leaf = a[0]
-        hli = a[1] if len(a)==2 else []      # hole
-        seq = [0,1,2,3,4,5]
+        global hli
+        leaf,hli = a
         xli = [i for i in range(12) if m[i] == 'x']
+        li = [0,3,8,11]
         if xli:
-            seq = [[0,1,2,3,4],[0,1,2,3,4],[0,1,2,3,4],[0,1,2,3,4],
-                   [0,8,1,5,9],[4,8,0],[7,3,11],[3,11,2,6,10],
-                   [8,9,10,11,4],[8,9,10,11,4],[8,9,10,11,4],[8,9,10,11,4]][xli[0]]
-        seq = [i for i in seq if i not in xli + hli]              # hole
+            x = xli[0]
+            li = [[4,8],[0,4,8],[3,7,11],[7,11],
+                   [0,8],[4,0,8],[7,3,11],[3,11],
+                   [4,0],[8,4,0],[11,7,3],[7,3]][x]
+        seq = [i for i in li if i not in xli + hli]
+        if not xli:
+            seq = seq[:len([i for i in m if i != '0']) - 5]
+
         hd,hdr = [],{}
         leaf1 = list(leaf[:])
         for i in seq:
@@ -175,16 +195,22 @@ def main(g_t,m,*a):
     if t == 1:
         global Ct,Pk1,Pk2
         leaf,=a
-        Ct = leaf.count('0')        # 빈 칸 개수
-        St = sorted([i for i in '12345678' if i in leaf],key=int)
-        Pk1,Pk2 = St[:-4],St[-4:]       # 사각팩, 원형팩
-        src(2,m,leaf)
+        st = sorted([i for i in '12345678' if i in leaf],key=int)
+        Ct = leaf.count('0')
+        Pk1,Pk2 = st[:-4],st[-4:]       # 사각팩, 원형팩
+        src(3,m,leaf,[0,1,2,3,4,5,6,7])
     return res
 
 if __name__ == '__main__':
-    t,m1,m2,hli = 0,'00025x704163','37200x406150',[7]
+    # 기본 배치
+    t,m1,m2,hli = 0,'010350402706','123456700000',[]
     # t,m1,m2 = 1,'51206743','54321076'
-    # t,m1,m2 = 1,'465x1273','156x3742'
+
+    # 변형
+    # t,m1,m2,hli = 0,'20006x503147','26457x000130',[]
+    # t,m1,m2 = 1,'63487152','82531647'
+
+    
 
     ts = time()
     res = main(t,m1,m2,hli) if t==0 else main(t,m1,m2)
@@ -192,4 +218,3 @@ if __name__ == '__main__':
     print(res)
     print('visited :',visited)
     print("{}step, idle {}s(DART-Studio {}m {}s) \n".format(len(res),round(te,3),int((te*250)//60),int((te*250)%60)))
-

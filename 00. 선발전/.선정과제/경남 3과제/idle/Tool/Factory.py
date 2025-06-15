@@ -1,7 +1,7 @@
 from Case import Case
 import sys,os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from main import main      # from 'fileName' import main
+from main import main
 Case.main = main
 
 def factory():
@@ -14,8 +14,8 @@ def factory():
     Case.status(case)
 
 t = 0
-Case.limit = 10000000
-Case.prograssLimit = Case.limit // 10
+Case.limit = 100000
+Case.prograssLimit = Case.limit // 100
 
 Case.printStyle = " [{}] | {},'{}','{}'" if t else " [{}] | {},'{}','{}',{}" # .format(ct, t, m1, *args)
 try:

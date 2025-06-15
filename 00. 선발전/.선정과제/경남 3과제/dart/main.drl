@@ -1,3 +1,4 @@
+
 from queue import PriorityQueue
 from collections import deque
 
@@ -95,11 +96,12 @@ def src(n,m,*a):
         return ct
     def heu2(m):
         ct = 0
+        li = [0,1,2,3,4,5,6,7]
         for pk in [i for i in leaf if i != '0']:
             if pk in m:
                 for i in range(1,8):
-                    if m[(m.index(pk)+i)%8] == leaf[(leaf.index(pk)+i)%8] != '0':
-                        ct -= 100
+                    if m[li[(m.index(pk)+i)%8]] == leaf[li[(leaf.index(pk)+i)%8]] != '0':
+                        ct -= 100    
         return ct
     put = lambda cur: q.put((g[cur] + (heu2 if n == 2 else heu1)(cur), cur)) if n > 0 else q.append(cur)
     get = lambda : q.get()[1] if n > 0 else q.popleft()
@@ -120,7 +122,7 @@ def src(n,m,*a):
         if n == 2:
             ct = 8 - Ct
             H = -100 * ((ct-1)*ct)
-            if heu2(cur) == H:       # -100 * (팩 개수 - 1 * 팩 개수)
+            if heu2(cur) == H:
                 break
         for i,j in exp(n,cur if n > 0 else m,cur):
             if i not in mkd:
@@ -177,8 +179,8 @@ def main(g_t,m,*a):
         St = sorted([i for i in '12345678' if i in leaf],key=int)
         Pk1,Pk2 = St[:-4],St[-4:]       # 사각팩, 원형팩
         src(2,m,leaf)
-    return res
-    
+    return res   
+ 
 def ts(ad,val=[],y=1,x=1):
     ser = serial_open(port='COM')
     li = list('00RSB06%DW'+'%03d'%ad)
@@ -198,7 +200,7 @@ tl = lambda *n:tp_log(' '.join(map(str,n)))
 drl_report_line(0)
 set_tool('tool')
 set_velx(1500); set_accx(2500); set_velj([150,150,180,225,225,225]); set_accj(400)
-begin_blend(30)
+begin_blend(25)
 ml,mj,aml,amj,mjx = movel,movej,amovel,amovej,movejx
 H = 370
 def up(p,mod=0,h=-1):
@@ -226,49 +228,63 @@ def grip(n):
         set_tool_digital_outputs([1,-2] if n else [-1,2])
     wait(0.25)
 itli = [0,1,2,3,4,5,6,7]
-def it(n,t=0.45,mod=0):
+def it(n,t=0.6,mod=0):
     global itli
     if not mod:
         n = 4 - itli.index(n)
     ts(10,n)
     wait(t * abs(n))
     itli = itli[-n:] + itli[:-n]
-    return 0.45 * abs(n)
+    return 0.6 * abs(n)
 gp = -1
 def gt(n):
     global gp
     di = {(-1,2):5,(2,1):5,(2,4):10,(1,4):10,(4,3):5,(3,2):10}
-    tl(di[gp,n])
     ts(21,di[gp,n])
     ts(20,n)
     gp = n
     
-def ps(p,y,x):
+#def ps(p,y,x):
+    #pos = {}
+    #sy = [(p[1][i] - p[0][i]) / (y-1) if y != 1 else 0 for i in range(6)]
+    #sx = [(p[2][i] - p[0][i]) / (x-1) if x != 1 else 0 for i in range(6)]
+    #for i in range(y*x):
+        #pos[i] = [p[0][j]+(sy[j] * (i//x))+(sx[j] * (i%x)) for j in range(6)]
+    #return pos  
+#elcA = ps([posx(-285.59, 223.52, 227.96, 0.47, -90.02, -89.96),posx(-285.33, 304.86, 228.68, 0.49, -90.04, -89.96),posx(-405.93, 223.53, 228.46, 0.92, -90, -89.99)],3,4)
+#airA = ps([posx(-285.85, 221, 135.67+60, 1.28, -90, 90),posx(-285.45, 302.03, 135.63+60, 1.42, -90.02, 90.03),posx(-406.06, 221.52, 135.86+60, 1.9, -90.03, 90.03)],3,4)
+    
+def ps(p,y,x,sy=40,sx=40):
     pos = {}
-    sy = [(p[1][i] - p[0][i]) / (y-1) if y != 1 else 0 for i in range(6)]
-    sx = [(p[2][i] - p[0][i]) / (x-1) if x != 1 else 0 for i in range(6)]
     for i in range(y*x):
-        pos[i] = [p[0][j]+(sy[j] * (i//x))+(sx[j] * (i%x)) for j in range(6)]
-    return pos  
-elcA = ps([posx(-285.42, 222.84, 227.4, 0.3, -90, -90),posx(-285.39, 303.88, 227.47, 0.12, -90.01, -89.97),posx(-406.04, 223.23, 227.71, 0.51, -90.02, -89.98)],3,4)
-airA = ps([posx(-285.97, 221.63, 135.65+60, 0.36, -90, 90),posx(-285.83, 302.76, 135.35+60, 0.33, -90.02, 90.02),posx(-406.51, 222.26, 135.55+60, 0.7, -90.01, 90.01)],3,4)
+        err = 1 if i>7 else 0
+        pos[i] = trans(p,[-sx * (i%x),sy * (i//x) + err,0,0,0,0])
+    return pos
+elcA = ps(posx(-285.23, 225.34, 229.17, 0.39, -90.01, -89.98),3,4)
+airA = ps(posx(-285.78, 225.63, 135.7+60, 1.67, -90.03, 90.05),3,4)
+#elcA = ps(posx(-284.88, 385.62, 231.26, 0.26, -90.02, -89.96),3,4)
+#airA = ps(posx(-285.59, 384.86, 136.16+60, 0.32, -90.02, 89.99),3,4)
 A = {i:[elcA[i],airA[i],100+i] for i in range(12)}
-IT = {0:[posx(386.91, 208, 297.52, 179.45, -90, -90),posx(386.66, 208.69, 265.07, 179.37, -90, 90),5]}
-GTI = {0:[posx(129.1, 564.22, 247.88, 0.13, 90, 90),[0]*6,500],1:[[0]*6,posx(129.94, 564.24, 155.76+60+0.2, 0.02, 90, -90),501]}
-GTO = {0:[posx(-124.38, 562.83, 248.11, 179.92, 90, 89.98),[0]*6,500],1:[[0]*6,posx(-125.24, 562.72, 156.05+60, 0.72, -90, 90.02),501]}
+IT = {0:[None,None,5]}
+GTI = {0:[None,[0]*6,500],1:[[0]*6,None,501]}
+GTO = {0:[None,[0]*6,500],1:[[0]*6,None,501]}
 
 def mt1(pos,n,p,pk,b=0):
-    tp = pos[p][tool]
-    mh = [[0,-1],[0,-1]] if b else [[1,3],[0,-1]]
-    a = [2000 if pos == IT else 3000]*2 if b else [800,2000]
+    z = -1.5 if not n and not tool else 0
+    tp = trans(pos[p][tool],[0,0,z,0,0,0])
+    mh = [[0,-1],[0,-1]] if b else [[1,5],[0,-1]]
+    a = [2000,2000] if b else [300,1000] if tool else [800,2500]
     if n==1:
         mh,a = mh[::-1],a[::-1]
     if b:
         mjx(up(tp,*mh[0]),sol=2 if pos in [GTO,A] else 3)
     else:
-        ml(up(tp,*mh[0]),a=2000,r=25 if n else 1)
+        ml(up(tp,*mh[0]),a=2100,r=25 if n==2 else 1)
     if n < 2:
-        ml(tp,a=a[0],r=5 if n else 1)
+        if z:
+            set_tool_digital_outputs([-1,-2])
+            wait(0.1)
+        ml(tp,a=a[0],r=5)
         grip(n)
         ts(pos[p][2],0 if n else pk)
         ts([600,601][tool],pk if n else 0)
@@ -315,7 +331,7 @@ def wt_init():
         #for ad,val in enumerate(li):
             #ts([100,200][i]+ad,val)            
     #for ad,val in enumerate([5,1,2,0,6,7,4,3]):
-        #ts(1+ad,val)    
+        #ts(1+ad,val)
     ts(500,0)
     ts(501,0)
     ts(600,0)
@@ -339,10 +355,13 @@ root[1] = cvt(ts(1,[],1,8))
 leaf[1] = cvt(ts(200,[],1,8))
 
 ress = [-1]*2
-ress[0] = main(0,root[0],leaf[0],info[0]); tl('0 done!!!')
-ress[1] = main(1,root[1],leaf[1]); tl('1 done!!!')
+#ress[0] = main(0,root[0],leaf[0],info[0]); tl('0 done!!!')
+#ress[1] = main(1,root[1],leaf[1]); tl('1 done!!!')
+ress = [
+[[[4, 0, 1, 2], 5], [[8, 4, 0, 1], 4], [[9, 8, 4, 0], 1], [[10, 9, 8, 4], 6], [[11, 10, 9, 8], 3], [[3, 7, 11, 10, 9], 2], [[2, 3, 7, 11, 10], 5], [[1, 2, 3, 7, 11], 4], [[0, 1, 2, 3], 1], [[4, 0, 1, 2], 6], [[8, 4], 3], [[9, 8], 2], [[10, 9], 5], [[6, 10], 7], [[2, 6], 6], [[3, 2], 1], [[11, 7, 3], 4], [[10, 11], 7], [[9, 10], 5], [[8, 9], 2], [[2, 1], 1], [[3, 2], 4], [[11, 7, 3], 7], [[10, 11], 5], [[9, 10], 2], [[1, 0], 1], [[2, 1], 4], [[3, 2], 7], [[11, 7, 3], 5], [[10, 11], 2], [[6, 10, 9, 8], 6], [[2, 6, 10], 7], [[1, 2, 6], 4], [[0, 1], 1], [[6, 2], 4], [[10, 6], 7], [[11, 10], 2], [[3, 7, 11], 5], [[2, 3], 4], [[1, 2], 1], [[10, 9], 2], [[11, 10], 5], [[3, 7, 11], 4], [[2, 3], 1], [[6, 2, 1, 0], 7], [[11, 7, 6, 2], 4], [[10, 11], 5], [[9, 10, 6], 2], [[11, 10], 5], [[3, 7, 11], 1], [[6, 7, 3], 2], [[10, 6], 5], [[11, 10, 9], 1], [[6, 10], 5], [[2, 6], 4], [[3, 2], 2], [[0, 1], 7], [[4, 0], 3]],
+[[1, 0, 4], [1, 4, 1], [0, 4, 4], [0, 0, 1], [1, 1, 6], [1, 7, 3], [0, 7, 6], [0, 1, 3], [1, 4, 4], [1, 5, 2], [0, 4, 2], [1, 0, 1], [0, 5, 1], [1, 4, 2], [0, 0, 2], [1, 1, 3], [0, 4, 3], [1, 5, 1], [0, 1, 1], [0, 5, 4], [1, 7, 6], [1, 4, 3], [0, 4, 6], [1, 5, 4], [0, 7, 4], [0, 5, 3], [1, 1, 1], [1, 2, 5], [0, 1, 5], [1, 4, 6], [0, 2, 6], [1, 1, 5], [0, 1, 1], [1, 5, 3], [0, 4, 3], [1, 1, 1], [0, 1, 5], [1, 6, 7], [0, 5, 7], [0, 6, 1], [1, 0, 2], [1, 7, 4], [0, 7, 2], [1, 6, 1], [0, 6, 4], [0, 0, 1]]]
 
-#grip(0)
+grip(0)
 #mj([90,0,90,90,-90,0])
 #mjx(up(IT[0][0]),sol=3)
 #RunIT(IT,ress[1])
@@ -362,6 +381,7 @@ ress[1] = main(1,root[1],leaf[1]); tl('1 done!!!')
     #if b:
         #it(itm.index(pk2),0)
     #mt1(GTI,0,1,pk1,1)
+   #
     #if b:
         #gt(1)         # inB1
         #cht(0,0.1)
@@ -387,6 +407,8 @@ ress[1] = main(1,root[1],leaf[1]); tl('1 done!!!')
     #if i<len(seq)-1:
         #amj([90,0,90,90,-90,180],a=600)
         #wait(0.3)
+
+mj([90,0,90,90,90,0])          # TEMP        
 H = 270
 Run(A,ress[0])
 
