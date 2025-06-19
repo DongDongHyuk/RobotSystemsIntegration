@@ -13,7 +13,7 @@
  Step | 23steps, 0.00619s(dart 0m 1s)
  Time | 16steps, 0.04259s(dart 0m 10s)
 
-< 고정팩1 홀1 >*
+< 고정팩1 홀1 >
  loop -> 500,000
  Avg  | 13step/0.00214s(dart 0m 0s)
  Step | 49steps, 0.01171s(dart 0m 2s)
@@ -23,7 +23,7 @@
  Step | 47steps, 0.01116s(dart 0m 2s)
  Time | 22steps, 0.04971s(dart 0m 12s)
 
-< 팩1 고정팩1  >
+< 팩1 고정팩1 >
  loop -> 500,000
  Avg  | 18step/0.0037s(dart 0m 0s)
  Step | 57steps, 0.03235s(dart 0m 8s)
@@ -33,7 +33,7 @@
  Step | 58steps, 0.01689s(dart 0m 4s)
  Time | 33steps, 0.05962s(dart 0m 14s)
 
-< 팩1 홀1>
+< 팩1 홀1 >
  loop -> 500,000
  Avg  | 15step/0.00294s(dart 0m 0s)
  Step | 35steps, 0.01146s(dart 0m 2s)

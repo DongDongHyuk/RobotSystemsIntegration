@@ -17,7 +17,6 @@ def randomMap(t):
     if t == 1:
         x = cs(range(8),c([0,1]))
         st = '12345678'[:c([7,8-len(x)])]
-        x,st = [],'1234567'
         for i in range(2):
             m = ['x' if i in x else '0' for i in range(8)]
             for pk in st:
@@ -32,6 +31,6 @@ def randomMap(t):
 # prt(m1,3,4)
 # prt(m2,3,4)
 
-# m1,m2 = randomMap(1)
-# prt(m1,1,8)
-# prt(m2,1,8)
+m1,m2 = randomMap(1)
+prt(m1,1,8)
+prt(m2,1,8)

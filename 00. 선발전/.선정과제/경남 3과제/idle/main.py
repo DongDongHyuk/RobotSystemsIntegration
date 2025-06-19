@@ -6,7 +6,9 @@ from collections import deque
 def exc1(m,s,e,r):
     m = list(m)
     m[s],m[e] = m[e],m[s]
-    info = [r,int(m[s])]
+    pk = int(m[s])
+    info = [[1,r[0],pk],[0,r[1],pk]] if t == 1 else [r,pk]
+    # info = [r,pk]
     return [''.join(m),info]
 
 def exc2(m,n,p,pk):      # 변형 : 그리퍼 2개 사용
@@ -32,7 +34,7 @@ def exp(n,m,p=-1):
     res = []
     if t==1 and Ct==0:      # 변형 : 그리퍼 2개 사용
         for i in range(si):
-            if ((m[i] in Pk1 and all([i in m for i in Pk1])) or (m[i] in Pk2 and all([i in m for i in Pk2]))) and m[i] not in '0x':
+            if (m[i] in Pk1 and all([i in m for i in Pk1])) or (m[i] in Pk2 and all([i in m for i in Pk2])):
                 res.append(exc2(m,1,i,m[i]))
             if m[i] == '0':
                 for pk in Pk1+Pk2:
@@ -71,17 +73,11 @@ def src(n,m,*a):
         s,e = a
         if n in [0,-1] and (n,s,e) in cache:
             return cache[n,s,e]
-    if n == 1:
+    if n in [1,2]:
         leaf,p,pk = a
-    # if n == 2:
-    #     leaf,li = a
-    #     p = -1
-    if n == 3:
-        leaf,li = a
     cur = m if n > 0 else s
     q = PriorityQueue() if n > 0 else deque([])
-    mkd = {cur:[cur]}
-    g = {cur:0}    
+    mkd,g = {cur:[cur]},{cur:0}
     def h1(m):
         ct = 0
         if p != -1:
@@ -99,7 +95,7 @@ def src(n,m,*a):
                     y2,x2 = divmod(leaf.index(m[i]),sx)
                     ct += abs(y1 - y2) + abs(x1 - x2)        
         return ct
-    def h3(m):
+    def h2(m):
         ct = 0
         li = [0,1,2,3,4,5,6,7]
         for pk in Pk1+Pk2:
@@ -108,7 +104,6 @@ def src(n,m,*a):
                 p1 = m.index(pk)
                 if 'x' in m:        # 고정팩 0~1 개
                     n = m.index('x') - leaf.index('x')
-                    p1 = m.index(pk)
                     if p1 == (p2+n)%8:
                         ct -= 10000
                 else:
@@ -121,7 +116,7 @@ def src(n,m,*a):
             else:
                 ct -= 100
         return ct
-    put = lambda cur : q.put((g[cur]+(h3 if n==3 else h1)(cur), cur)) if n > 0 else q.append(cur)
+    put = lambda cur : q.put((g[cur]+(h2 if n==2 else h1)(cur), cur)) if n > 0 else q.append(cur)
     get = lambda : q.get()[1] if n > 0 else q.popleft()
     put(cur)
     while 1:
@@ -137,10 +132,10 @@ def src(n,m,*a):
         if n == 1:      # 정렬
             if (p == -1 and cur == leaf) or (p != -1 and cur[p] == pk):
                 break
-        if n == 3:      # 뺑뺑이
-            if 'x' in cur and h3(cur) == -10000*len(Pk1+Pk2):
+        if n == 2:      # 뺑뺑이
+            if 'x' in cur and h2(cur) == -10000*len(Pk1+Pk2):
                 break
-            if 'x' not in cur and h3(cur) == -10000*8*(8-Ct):
+            if 'x' not in cur and h2(cur) == -10000*8*(8-Ct):
                 break
         for i,j in exp(n,cur if n > 0 else m,cur):
             if i not in mkd:
@@ -176,7 +171,6 @@ def main(g_t,m,*a):
         seq = [i for i in li if i not in xli + hli]
         if not xli:
             seq = seq[:len([i for i in m if i != '0']) - 5]
-
         hd,hdr = [],{}
         leaf1 = list(leaf[:])
         for i in seq:
@@ -195,22 +189,23 @@ def main(g_t,m,*a):
     if t == 1:
         global Ct,Pk1,Pk2
         leaf,=a
-        st = sorted([i for i in '12345678' if i in leaf],key=int)
+        st = [i for i in '12345678' if i in leaf]
         Ct = leaf.count('0')
         Pk1,Pk2 = st[:-4],st[-4:]       # 사각팩, 원형팩
-        src(3,m,leaf,[0,1,2,3,4,5,6,7])
+        src(2,m,leaf,-1,-1)
     return res
 
 if __name__ == '__main__':
     # 기본 배치
-    t,m1,m2,hli = 0,'010350402706','123456700000',[]
+    # t,m1,m2,hli = 0,'010350402706','123456700000',[]
     # t,m1,m2 = 1,'51206743','54321076'
 
     # 변형
     # t,m1,m2,hli = 0,'20006x503147','26457x000130',[]
     # t,m1,m2 = 1,'63487152','82531647'
 
-    
+    t,m1,m2,hli = 0,'12345670000x','76543210000x',[8]
+    # t,m1,m2=1,'1234567x','7654321x'
 
     ts = time()
     res = main(t,m1,m2,hli) if t==0 else main(t,m1,m2)

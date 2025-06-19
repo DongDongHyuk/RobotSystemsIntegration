@@ -13,8 +13,8 @@ def factory():
             break
     Case.status(case)
 
-t = 0
-Case.limit = 100000
+t = 1
+Case.limit = 10000
 Case.prograssLimit = Case.limit // 100
 
 Case.printStyle = " [{}] | {},'{}','{}'" if t else " [{}] | {},'{}','{}',{}" # .format(ct, t, m1, *args)
