@@ -5,13 +5,13 @@ def exc1(m,s,e,r):
     m=list(m)
     m[s],m[e]=m[e],m[s]
     pk=int(m[s])
-    info=[[1,r[0],pk],[0,r[1],pk]] if t==1 else [r,pk]
-    return [''.join(m),info]
-
-def exc2(m,n,p,pk):
-    m=list(m)
-    m[p]='0' if n else pk
-    info=[n,p,int(pk)]
+    if t==1:
+        info=[[1,r[0],int(m[s])],
+              [1,r[1],int(m[e])],
+              [0,r[1],int(m[s])],
+              [0,r[0],int(m[e])]]
+    else:
+        info=[r,pk]
     return [''.join(m),info]
 
 def aro(pos):
@@ -25,26 +25,18 @@ def aro(pos):
         if -1<ny<sy and -1<nx<sx:
             res.append(ny*sx+nx)
     cache[pos]=res
-    return res
+    return cache[pos]
 
 def exp(n,m,p=-1):
     res=[]
-    if t==1 and Ct==0:
-        for i in range(si):
-            if (m[i] in Pk1 and all([i in m for i in Pk1])) or (m[i] in Pk2 and all([i in m for i in Pk2])):
-                res.append(exc2(m,1,i,m[i]))
-            if m[i]=='0':
-                for pk in Pk1+Pk2:
-                    if pk not in m:
-                        res.append(exc2(m,0,i,pk))
-        return res
     di1,di2={},{}
     for i in range(si):
         if not fx[i] and m[i]!='x':
             if m[i]!='0' or n<1:
                 di1[i]=i
-            if m[i]=='0' or n<1:
+            if m[i]=='0' or n<1 or t==1:
                 di2[i]=i
+            
     for i in di1 if n>0 else [p]:
         if n==-2 and m[i]!='0':
             continue
@@ -52,17 +44,22 @@ def exp(n,m,p=-1):
         r={i:[di1[i]]}
         while q:
             cur=q.popleft()
-            for j in range(si) if t==1 else aro(cur):
+            for j in [(i+j)%8 for j in [-3,-2,-1,1,2,3]] if t==1 else aro(cur):
                 if j in r or j not in di2:
                     continue
+                if t==1:
+                    if i==j:
+                        continue
+                    if m[i] in Pk1 and m[j] in Pk1:
+                        continue
+                    if m[i] in Pk2 and m[j] in Pk2:
+                        continue
                 if n>0:
                     q.append(j)
                 r[j]=r[cur]+[di2[j]]
-                if t==0 and n>0 and j in hli:
-                    continue
                 res.append(exc1(m,di2[j],di1[i],r[j]) if n>0 else [j,j])
     return res
-
+    
 vs=0
 def src(n,m,*a):
     global res,vs
@@ -148,7 +145,7 @@ def src(n,m,*a):
     if n in [0,-1]:
         cache[n,s,e]=res1
     return res1
-
+    
 def main(g_t,m,*a):
     global t,sy,sx,si,fx,fxli,cache,res
     t=g_t
@@ -166,8 +163,8 @@ def main(g_t,m,*a):
         if xli:
             x=xli[0]
             li=[[4,8],[0,4,8],[3,7,11],[7,11],
-                   [0,8],[4,0,8],[7,3,11],[3,11],
-                   [4,0],[8,4,0],[11,7,3],[7,3]][x]
+                [0,8],[4,0,8],[7,3,11],[3,11],
+                [4,0],[8,4,0],[11,7,3],[7,3]][x]
         seq=[i for i in li if i not in xli+hli]
         if not xli:
             seq=seq[:len([i for i in m if i!='0'])-5]
@@ -192,5 +189,12 @@ def main(g_t,m,*a):
         st=[i for i in '12345678' if i in leaf]
         Ct=leaf.count('0')
         Pk1,Pk2=st[:-4],st[-4:]
+        
+        # temp
+        #for i,j in exp(1,m):
+            #tl(i)
+            #tl(j)
+        #exit()
+        
         src(2,m,leaf,-1,-1)
     return res

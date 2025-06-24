@@ -1,7 +1,7 @@
 from Case import Case
 import sys,os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from main import main
+from main_temp import main      # temp
 Case.main = main
 
 def factory():
