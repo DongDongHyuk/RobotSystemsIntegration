@@ -1,0 +1,426 @@
+from queue import PriorityQueue
+from collections import deque
+
+def exc1(m,s,e,r):
+    m = list(m)
+    m[s],m[e] = m[e],m[s]
+    pk = int(m[s])
+    info = [[1,r[0],pk],[0,r[1],pk]] if t == 1 else [r,pk]
+    # info = [r,pk]
+    return [''.join(m),info]
+
+def exc2(m,n,p,pk):      # 변형 : 그리퍼 2개 사용
+    m = list(m)
+    m[p] = '0' if n else pk
+    info = [n,p,int(pk)]
+    return [''.join(m),info]
+
+def aro(pos):
+    if pos in cache:
+        return cache[pos]
+    res = []
+    dy,dx = [-1,0,1,0],[0,1,0,-1]
+    y,x = divmod(pos,sx)
+    for i in range(4):
+        ny,nx = y + dy[i],x + dx[i]
+        if -1 < ny < sy and -1 < nx < sx:
+            res.append(ny * sx + nx)
+    cache[pos] = res
+    return res
+
+def exp(n,m,p=-1):
+    res = []
+    if t==1 and Ct==0:      # 변형 : 그리퍼 2개 사용
+        for i in range(si):
+            if ((m[i] in Pk1 and all([i in m for i in Pk1])) or (m[i] in Pk2 and all([i in m for i in Pk2]))) and m[i] not in '0x':
+                res.append(exc2(m,1,i,m[i]))
+            if m[i] == '0':
+                for pk in Pk1+Pk2:
+                    if pk not in m:
+                        res.append(exc2(m,0,i,pk))
+        return res
+    di1,di2 = {},{}
+    for i in range(si):
+        if not fx[i] and m[i] != 'x':
+            if m[i] != '0' or n < 1:
+                di1[i] = i
+            if m[i] == '0' or n < 1:
+                di2[i] = i
+    for i in di1 if n > 0 else [p]:
+        if n == -2 and m[i] != '0':
+            continue
+        q = deque([i])
+        r = {i:[di1[i]]}
+        while q:
+            cur = q.popleft()
+            for j in range(si) if t == 1 else aro(cur):
+                if j in r or j not in di2:
+                    continue
+                if n > 0:
+                    q.append(j)
+                r[j] = r[cur] + [di2[j]]
+                if t == 0 and n > 0 and j in hli:       # hole
+                    continue
+                res.append(exc1(m,di2[j],di1[i],r[j]) if n > 0 else [j,j])
+    return res
+
+visited = 0
+def src(n,m,*a):
+    global res, visited       # temp
+    if n < 1:
+        s,e = a
+        if n in [0,-1] and (n,s,e) in cache:
+            return cache[n,s,e]
+    if n in [1,2]:
+        leaf,p,pk = a
+    cur = m if n > 0 else s
+    q = PriorityQueue() if n > 0 else deque([])
+    mkd,g = {cur:[cur]},{cur:0}
+    def h1(m):
+        ct = 0
+        if p != -1:
+            r = src(0,m,m.index(pk),p)[1:]
+            ct += len(r)
+            ct += 100 * len([i for i in r if m[i] not in '0'+pk])
+            r2 = src(-1,m,p,-1)
+            if len(r2) > 1:
+                if m[r2[1]] == pk and m[r2[0]] != '0':
+                    ct += 10000
+        else:
+            for i in range(si):
+                if not fx[i] and m[i] not in '0x':
+                    y1,x1 = divmod(i,sx)
+                    y2,x2 = divmod(leaf.index(m[i]),sx)
+                    ct += abs(y1 - y2) + abs(x1 - x2)        
+        return ct
+    def h2(m):
+        ct = 0
+        li = [0,1,2,3,4,5,6,7]
+        for pk in Pk1+Pk2:
+            p2 = leaf.index(pk)
+            if pk in m:       # 사용 그리퍼 1~2 개
+                p1 = m.index(pk)
+                if 'x' in m:        # 고정팩 0~1 개
+                    n = m.index('x') - leaf.index('x')
+                    p1 = m.index(pk)
+                    if p1 == (p2+n)%8:
+                        ct -= 10000
+                else:
+                    n1,n2 = li.index(p1),li.index(p2)
+                    st1 = [m[i] for i in li[n1:]+li[:n1]]
+                    st2 = [leaf[i] for i in li[n2:]+li[:n2]]
+                    for i in range(len(st1)):
+                        if st1[i] == st2[i]:
+                            ct -= 10000
+            else:
+                ct -= 100
+        return ct
+    put = lambda cur : q.put((g[cur]+(h2 if n==2 else h1)(cur), cur)) if n > 0 else q.append(cur)
+    get = lambda : q.get()[1] if n > 0 else q.popleft()
+    put(cur)
+    while 1:
+        if n == -1 and len(q) > 1:      # isDead
+            break
+        cur = get()
+        if n > 0:      # temp
+            visited += 1
+        if n == -2 and m[cur] != '0' and cur not in e:      # 땡기기
+            break
+        if n == 0 and cur == e:         # 길찾기
+            break
+        if n == 1:      # 정렬
+            if (p == -1 and cur == leaf) or (p != -1 and cur[p] == pk):
+                break
+        if n == 2:      # 뺑뺑이
+            if 'x' in cur and h2(cur) == -10000*len(Pk1+Pk2):
+                break
+            if 'x' not in cur and h2(cur) == -10000*8*(8-Ct):
+                break
+        for i,j in exp(n,cur if n > 0 else m,cur):
+            if i not in mkd:
+                mkd[i],g[i] = mkd[cur]+[j],g[cur]+1
+                put(i)
+    res1 = mkd[cur]
+    if n > 0:
+        res += res1[1:]
+        return cur
+    if n in [0,-1]:
+        cache[n,s,e] = res1
+    return res1
+
+def main(g_t,m,*a):
+    global t,sy,sx,si,fx,fxli,cache,res
+    t = g_t
+    sy,sx = [[3,4],[1,8]][t]
+    si = sy * sx
+    fx = {i:0 for i in range(si)}
+    fxli = lambda li,n: fx.update({i:n for i in li})
+    cache = {}
+    res = []
+    if t == 0:
+        global hli
+        leaf,hli = a
+        xli = [i for i in range(12) if m[i] == 'x']
+        li = [0,3,8,11]
+        if xli:
+            x = xli[0]
+            li = [[4,8],[0,4,8],[3,7,11],[7,11],
+                   [0,8],[4,0,8],[7,3,11],[3,11],
+                   [4,0],[8,4,0],[11,7,3],[7,3]][x]
+        seq = [i for i in li if i not in xli + hli]
+        if not xli:
+            seq = seq[:len([i for i in m if i != '0']) - 5]
+        hd,hdr = [],{}
+        leaf1 = list(leaf[:])
+        for i in seq:
+            pk = leaf1[i]
+            if pk == '0':
+                r = src(-2,leaf1,i,hd)
+                pk = leaf1[r[-1]]
+                hd.append(i)
+                hdr[i] = r
+                leaf1[r[-1]],leaf1[i] = '0',pk
+            m = src(1,m,''.join(leaf1),i,pk)
+            fx[i] = 1
+        m = src(1,m,''.join(leaf1),-1,-1)
+        for i in hd[::-1]:
+            res.append([hdr[i],int(m[i])])
+    if t == 1:
+        global Ct,Pk1,Pk2
+        leaf,=a
+        st = sorted([i for i in '12345678' if i in leaf],key=int)
+        Ct = leaf.count('0')
+        Pk1,Pk2 = st[:-4],st[-4:]       # 사각팩, 원형팩
+        src(2,m,leaf,-1,-1)
+    return res
+ 
+def ts(ad,val=[],y=1,x=1):
+    ser = serial_open(port='COM')
+    li = list('00RSB06%DW'+'%03d'%ad)
+    li += [i for i in '{:02X}'.format(y*x)]
+    if val != []:
+        li[2] = 'W'
+        li += '%04X'%(val&0xFFFF)
+    ser.write([5]+[ord(i) for i in li]+[4])
+    wait(0.05 if val == [] else 0.02) 
+    if val == []:
+        li = ser.read(ser.inWaiting()).decode()
+        val = [int(li[10+i:14+i],16) for i in range(0,y*x*4,4)]
+    serial_close(ser)
+    return val[0] if type(val) != int and len(val) == 1 else val
+
+tl = lambda *n:tp_log(' '.join(map(str,n)))
+drl_report_line(0)
+set_tool('tool')
+set_velx(1500); set_accx(2500); set_velj([150,150,180,225,225,225]); set_accj(400)
+begin_blend(25)
+ml,mj,aml,amj,mjx = movel,movej,amovel,amovej,movejx
+H = 380
+def up(p,mod=0,h=-1):
+    p,h = p[:],h if h != -1 else H
+    p[2] = p[2]+h if mod else h
+    return p
+tool = 0
+def cht(n=-1,t=0.6):
+    global tool
+    if n == tool:
+        return 0
+    tool = 1 - tool
+    amj([0,0,0,0,0,180 if tool else -180],a=1500,mod=1)
+    wait(t)
+    return 0.6
+isgrip = 0
+def grip(n):
+    global isgrip
+    isgrip = n
+    if tool:
+        if not n:
+            wait(0.1)
+        ts(40,n)
+    else:
+        set_tool_digital_outputs([1,-2] if n else [-1,2])
+    wait(0.25)
+itli = [0,1,2,3,4,5,6,7]
+def it(n,t=0.4,mod=0):
+    global itli
+    if not mod:
+        n = 4 - itli.index(n)
+    ts(10,n)
+    wait(t * abs(n))
+    itli = itli[-n:] + itli[:-n]
+    return 0.6 * abs(n)
+gp = -1
+def gt(n):
+    global gp
+    di = {(-1,2):5,(2,1):5,(2,4):10,(1,4):10,(4,3):5,(3,2):10}
+    ts(21,di[gp,n])
+    ts(20,n)
+    gp = n
+    
+#def ps(p,y,x):
+    #pos = {}
+    #sy = [(p[1][i] - p[0][i]) / (y-1) if y != 1 else 0 for i in range(6)]
+    #sx = [(p[2][i] - p[0][i]) / (x-1) if x != 1 else 0 for i in range(6)]
+    #for i in range(y*x):
+        #pos[i] = [p[0][j] + (sy[j] * (i//x)) + (sx[j] * (i%x)) +  for j in range(6)]
+    #return pos    
+def ps(p,y,x,sy=40,sx=40):
+    pos = {}
+    for i in range(y*x):
+        err = 1 if i>7 else 0
+        pos[i] = trans(p,[-sx * (i%x),sy * (i//x) + err,0,0,0,0])
+    return pos
+elcA = ps(posx(-285.41, 224.44, 235.23, 0.32, -90.03, -89.96),3,4)
+airA = ps(posx(-285.6, 225.14, 135.75+60, 0.16, -90, 90),3,4)
+A = {i:[elcA[i],airA[i],100+i] for i in range(12)}
+IT = {0:[posx(386.09, 208.18, 305.03, 179.53, -90, -90),posx(387.04, 206.52, 265.46, 179.35, -90, 90),5]}
+GTI = {0:[posx(129.15, 563.04, 255.88, 0.08, 90, 90),[0]*6,500],1:[[0]*6,posx(129.84, 562.13, 155.48+60, 179.9, -90, 89.96),501]}
+GTO = {0:[posx(-123.83, 563.51, 256.06, 179.96, 89.96, 90.04),[0]*6,500],1:[[0]*6,posx(-124.31, 564.56, 156.07+60, 179.86, 90, -90),501]}
+
+def mt1(pos,n,p,pk,b=0):
+    tp = pos[p][tool]
+    mh = [[0,-1],[0,-1]] if b else [[1,5],[0,-1]]
+    a = [2000,2000] if b else [300,1200] if tool else [500,1500]
+    if n==1:
+        mh,a = mh[::-1],a[::-1]
+    if b:
+        mjx(up(tp,*mh[0]),sol=2 if pos in [GTO,A] else 3)
+    else:
+        ml(up(tp,*mh[0]),a=2500 if n==1 else 2000,r=25 if n else 1)
+    if n < 2:
+        ml(tp,a=a[0],r=5 if n else 1)
+        grip(n)
+        ts(pos[p][2],0 if n else pk)
+        ts([600,601][tool],pk if n else 0)
+        ml(up(tp,*mh[1]),a=a[1])
+        
+def Run(pos,res):
+    for [r,pk] in res:
+        n = len(r)
+        li = [r[1]-r[0]]
+        cht(pk in ci)
+        mt1(pos,1,r[0],pk)
+        for i in range(1,n):
+            if i < n-1:
+                dire = r[i+1] - r[i]
+                skip = li[i-1] == dire
+                li.append(dire)
+                if skip:
+                    continue
+            mt1(pos,1 if not i else 0 if i == n-1 else 2,r[i],pk)
+
+def RunIT(pos,res):
+    for li in res:
+        if len(li)==3:
+            li = [li]
+        for [n,p,pk] in li:
+            t1 = it(p,0)
+            t2 = cht(pk in ci,0)
+            wait(t1 if t1 > t2 else t2)
+            mt1(IT,n,0,pk,1)
+    it(4 - [ts(i) for i in range(1,9)].index(int(leaf[1][4])),mod=1)
+    wait(1)
+
+def wt_init():
+    #for i in range(2):
+        #li = [[0,0,0,2,5,9,7,10,4,1,6,3,3,7,2,0,0,9,4,10,6,1,5,0],
+              #[1,5,6,9,3,7,4,2]][i]
+        #for ad,val in enumerate(li):
+            #ts([100,200][i]+ad,val)            
+    #for ad,val in enumerate([4,6,5,9,1,2,7,3]):
+        #ts(1+ad,val)
+    # default
+    for i in range(2):
+        li = [[0,1,0,3,5,0,4,0,2,7,0,6,1,2,3,4,5,6,7,0,0,0,0,0],
+              [5,4,3,2,1,0,7,6]][i]
+        for ad,val in enumerate(li):
+            ts([100,200][i]+ad,val)            
+    for ad,val in enumerate([5,1,2,0,6,7,4,3]):
+        ts(1+ad,val)
+    ts(500,0)
+    ts(501,0)
+    ts(600,0)
+    ts(601,0)
+wt_init()       # temp
+
+#ts(30,1)        # buzz
+
+import time         # temp
+time_start = time.time()        # temp
+
+def cvt(li):
+    di = {9:'x',10:'0'}
+    return ''.join([di[i] if i in di else str(i) for i in li])
+root,leaf,info = [-1]*2,[-1]*2,[-1]*2
+li = ts(100,[],4,3)
+info[0] = [i for i in range(12) if li[i] == 10]
+root[0] = cvt(li)
+leaf[0] = cvt(ts(112,[],4,3))
+root[1] = cvt(ts(1,[],1,8))
+leaf[1] = cvt(ts(200,[],1,8))
+
+tl(0,root[0],leaf[0],info[0])        # temp
+tl(1,root[1],leaf[1])        # temp
+ress = [-1]*2
+ress[0] = main(0,root[0],leaf[0],info[0]); tl('0 done',len(ress[0]))
+ress[1] = main(1,root[1],leaf[1]); tl('1 done',len(ress[1]))
+
+ #변형
+sq,ci = [1,2,3],[4,5,6,7]               # Square, Circle
+seq = [[4,1],[5,2],[6,3],[7,-1]]        # [Square, Circle]
+#sq,ci = [1,2,3,4],[5,6,7,8]               # Square, Circle
+#seq = [[5,1],[6,2],[7,3],[8,4]]        # [Square, Circle]
+
+grip(0)
+mj([90,0,90,90,-90,0])
+mjx(up(IT[0][0]),sol=3)
+RunIT(IT,ress[1])
+am = ts(100,[],3,4)
+for i in range(len(seq)):
+    pk1,pk2 = seq[i]
+    itli = [0,1,2,3,4,5,6,7]
+    itm = ts(1,[],1,8)
+    b = pk2!=-1
+    H = 380
+    if not i:
+        gt(2)         # inB2
+        it(itm.index(pk1))
+    cht(1)
+    mt1(IT,1,0,pk1,1)
+    if b:
+        it(itm.index(pk2),0)
+    mt1(GTI,0,1,pk1,1)   
+    if b:
+        gt(1)         # inB1
+        cht(0,0.1)
+        mt1(IT,1,0,pk2,1)
+        if i<len(seq)-1:
+            it(itm.index(seq[i+1][0]),0)
+        mt1(GTI,0,0,pk2,1)
+    H = 300
+    gt(4)            # outB2
+    cht(1,0)
+    amj([0,0,0,0,180,-30],a=800,mod=1)    
+    if not b:
+        wait(0.5)
+    mt1(GTO,1,1,pk1,1)
+    if b:
+        gt(3)            # outB1
+        cht(0)
+        mt1(GTO,1,0,pk2,1)
+        gt(2)         # inB2
+        mt1(A,0,am.index(pk2),pk2,1)
+        cht(1,0.8)
+        mjx(up(A[am.index(pk1)][tool]),sol=2,a=200)
+    mt1(A,0,am.index(pk1),pk1,1)
+    if i<len(seq)-1:
+        amj([90,0,90,90,-90,180],a=600)
+        wait(0.3)
+H = 270
+Run(A,ress[0])
+
+ts(30,1)        # buzz
+
+time_end = time.time() - time_start         # temp
+minute,second = int(time_end // 60),int(time_end % 60)         # temp
+tl('{}m {}s\n'.format(minute,second))         # temp

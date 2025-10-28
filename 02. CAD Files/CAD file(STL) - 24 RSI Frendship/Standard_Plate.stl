@@ -1,0 +1,198 @@
+solid triangles
+facet normal 0.000 1.000 0.000
+outer loop
+vertex 98.999 140.000 8.000
+vertex 99.000 140.000 0.001
+vertex -98.999 140.000 0.000
+endloop
+endfacet
+facet normal 0.707 0.707 0.000
+outer loop
+vertex 99.999 139.001 8.000
+vertex 100.000 139.000 0.001
+vertex 99.001 139.999 0.000
+endloop
+endfacet
+facet normal -0.707 0.707 0.000
+outer loop
+vertex -99.000 140.000 7.999
+vertex -100.000 139.000 0.001
+vertex -99.999 139.001 8.000
+endloop
+endfacet
+facet normal 1.000 0.000 0.000
+outer loop
+vertex 100.000 138.999 0.000
+vertex 100.000 139.001 7.999
+vertex 100.000 -138.999 8.000
+endloop
+endfacet
+facet normal -1.000 0.000 0.000
+outer loop
+vertex -100.000 138.999 0.000
+vertex -100.000 -138.999 8.000
+vertex -100.000 139.000 8.000
+endloop
+endfacet
+facet normal 0.707 -0.707 0.000
+outer loop
+vertex 99.999 -139.001 8.000
+vertex 99.000 -140.000 0.000
+vertex 100.000 -139.000 0.001
+endloop
+endfacet
+facet normal -0.707 -0.707 0.000
+outer loop
+vertex -99.001 -139.999 0.000
+vertex -99.000 -140.000 7.999
+vertex -99.999 -139.001 8.000
+endloop
+endfacet
+facet normal 0.000 -1.000 0.000
+outer loop
+vertex 98.999 -140.000 8.000
+vertex -98.999 -140.000 0.000
+vertex 99.001 -140.000 0.000
+endloop
+endfacet
+facet normal 0.000 -1.000 0.000
+outer loop
+vertex 98.999 -140.000 8.000
+vertex -99.000 -140.000 7.999
+vertex -98.999 -140.000 0.000
+endloop
+endfacet
+facet normal -0.707 -0.707 0.000
+outer loop
+vertex -99.001 -139.999 0.000
+vertex -99.999 -139.001 8.000
+vertex -100.000 -139.000 0.001
+endloop
+endfacet
+facet normal 0.707 -0.707 0.000
+outer loop
+vertex 99.999 -139.001 8.000
+vertex 99.000 -140.000 7.999
+vertex 99.000 -140.000 0.000
+endloop
+endfacet
+facet normal -1.000 0.000 0.000
+outer loop
+vertex -100.000 138.999 0.000
+vertex -100.000 -139.000 0.001
+vertex -100.000 -138.999 8.000
+endloop
+endfacet
+facet normal 1.000 0.000 0.000
+outer loop
+vertex 100.000 138.999 0.000
+vertex 100.000 -138.999 8.000
+vertex 100.000 -139.000 0.001
+endloop
+endfacet
+facet normal -0.707 0.707 0.000
+outer loop
+vertex -99.000 140.000 7.999
+vertex -99.000 140.000 0.001
+vertex -100.000 139.000 0.001
+endloop
+endfacet
+facet normal 0.707 0.707 0.000
+outer loop
+vertex 99.999 139.001 8.000
+vertex 99.001 139.999 0.000
+vertex 99.000 140.000 7.999
+endloop
+endfacet
+facet normal 0.000 1.000 0.000
+outer loop
+vertex 98.999 140.000 8.000
+vertex -98.999 140.000 0.000
+vertex -99.000 140.000 7.999
+endloop
+endfacet
+facet normal 0.000 0.000 -1.000
+outer loop
+vertex 98.999 -140.000 0.000
+vertex -98.999 -140.001 0.000
+vertex -98.999 140.000 0.000
+endloop
+endfacet
+facet normal 0.000 0.000 -1.000
+outer loop
+vertex -98.999 -140.001 0.000
+vertex -99.999 139.001 0.000
+vertex -98.999 140.000 0.000
+endloop
+endfacet
+facet normal 0.000 0.000 -1.000
+outer loop
+vertex -98.999 -140.001 0.000
+vertex -100.000 -138.999 0.000
+vertex -99.999 139.001 0.000
+endloop
+endfacet
+facet normal 0.000 0.000 -1.000
+outer loop
+vertex 99.999 -139.001 0.000
+vertex 98.999 -140.000 0.000
+vertex 100.000 138.999 0.000
+endloop
+endfacet
+facet normal 0.000 0.000 -1.000
+outer loop
+vertex 98.999 -140.000 0.000
+vertex 99.001 139.999 0.000
+vertex 100.000 138.999 0.000
+endloop
+endfacet
+facet normal 0.000 0.000 -1.000
+outer loop
+vertex 98.999 -140.000 0.000
+vertex -98.999 140.000 0.000
+vertex 99.001 139.999 0.000
+endloop
+endfacet
+facet normal 0.000 0.000 1.000
+outer loop
+vertex 98.999 -140.000 8.000
+vertex -98.999 140.000 8.000
+vertex -98.999 -140.001 8.000
+endloop
+endfacet
+facet normal 0.000 0.000 1.000
+outer loop
+vertex -98.999 -140.001 8.000
+vertex -98.999 140.000 8.000
+vertex -99.999 139.001 8.000
+endloop
+endfacet
+facet normal 0.000 0.000 1.000
+outer loop
+vertex -98.999 -140.001 8.000
+vertex -99.999 139.001 8.000
+vertex -100.000 -138.999 8.000
+endloop
+endfacet
+facet normal 0.000 0.000 1.000
+outer loop
+vertex 99.999 -139.001 8.000
+vertex 100.000 138.999 8.000
+vertex 98.999 -140.000 8.000
+endloop
+endfacet
+facet normal 0.000 0.000 1.000
+outer loop
+vertex 98.999 -140.000 8.000
+vertex 100.000 138.999 8.000
+vertex 99.001 139.999 8.000
+endloop
+endfacet
+facet normal 0.000 0.000 1.000
+outer loop
+vertex 98.999 -140.000 8.000
+vertex 99.001 139.999 8.000
+vertex -98.999 140.000 8.000
+endloop
+endfacet
+endsolid

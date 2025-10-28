@@ -1,0 +1,27 @@
+from Case import Case
+import sys,os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from main_temp import main      # temp
+Case.main = main
+
+def factory():
+    global case
+    while Case.ct < Case.limit:
+        case = Case(t)
+        res = case.run()
+        if not res:
+            break
+    Case.status(case)
+
+t = 1
+Case.limit = 10000
+Case.prograssLimit = Case.limit // 100
+
+Case.printStyle = " [{}] | {},'{}','{}'" if t else " [{}] | {},'{}','{}',{}" # .format(ct, t, m1, *args)
+try:
+    print()
+    factory()
+except KeyboardInterrupt:
+    Case.failCase = case
+    Case.err = 'Ctrl + C'
+    Case.status(case)

@@ -1,0 +1,60 @@
+
+[ A ]
+ 팩 고정팩 홀
+ 7    0    0
+ 7    1    0
+ 7    0    1
+ 7    1    1
+ 8    1    0
+ 8    0    1
+
+< 기본 >
+ Avg  | 11step/0.00185s(dart 0m 0s)
+ Step | 23steps, 0.00619s(dart 0m 1s)
+ Time | 16steps, 0.04259s(dart 0m 10s)
+
+< 고정팩1 홀1 >
+ loop -> 500,000
+ Avg  | 13step/0.00214s(dart 0m 0s)
+ Step | 49steps, 0.01171s(dart 0m 2s)
+ Time | 20steps, 0.03931s(dart 0m 9s)
+ loop -> 100,000
+ Avg  | 13step/0.00216s(dart 0m 0s)
+ Step | 47steps, 0.01116s(dart 0m 2s)
+ Time | 22steps, 0.04971s(dart 0m 12s)
+
+< 팩1 고정팩1 >
+ loop -> 500,000
+ Avg  | 18step/0.0037s(dart 0m 0s)
+ Step | 57steps, 0.03235s(dart 0m 8s)
+ Time | 19steps, 0.09853s(dart 0m 24s)
+ loop -> 100,000
+ Avg  | 19step/0.00332s(dart 0m 0s)
+ Step | 58steps, 0.01689s(dart 0m 4s)
+ Time | 33steps, 0.05962s(dart 0m 14s)
+
+< 팩1 홀1 >
+ loop -> 500,000
+ Avg  | 15step/0.00294s(dart 0m 0s)
+ Step | 35steps, 0.01146s(dart 0m 2s)
+ Time | 19steps, 0.06565s(dart 0m 16s)
+ loop -> 100,000
+ Avg  | 17step/0.00218s(dart 0m 0s)
+ Step | 37steps, 0.00349s(dart 0m 0s)
+ Time | 17steps, 0.04313s(dart 0m 10s)
+
+[ IT ]
+ 팩 고정팩
+ 7    0
+ 7    1
+ 8    0
+
+< 기본 >
+ Avg  | 5step/0.00056s(dart 0m 0s)
+ Step | 9steps, 0.00107s(dart 0m 0s)
+ Time | 4steps, 0.0157s(dart 0m 3s)
+
+< 고정팩1 팩1 >*
+ Avg  | 11step/0.00109s(dart 0m 0s)
+ Step | 26steps, 0.00931s(dart 0m 2s)
+ Time | 14steps, 0.03882s(dart 0m 9s)

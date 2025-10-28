@@ -1,0 +1,290 @@
+from queue import *
+
+def exc(m,s,e,r):
+    m = list(m)
+    m[s],m[e] = m[e],m[s]
+    info = [r,10 if m[s] == 'a' else int(m[s])]
+    return [''.join(m),info]
+
+def aro(pos):
+    if pos in cache:
+        return cache[pos]
+    res = []
+    dy,dx = [-1,0,1,0],[0,1,0,-1]
+    y,x = divmod(pos,sx)
+    for i in range(4):
+        ny,nx = y + dy[i],x + dx[i]
+        if -1 < ny < sy and -1 < nx < sx:
+            res.append(ny * sx + nx)
+    cache[pos] = res
+    return res
+
+def exp(n,m,p=-1):
+    res = []
+    for i in range(size) if n > 0 else [p]:
+        if fx[i] or m[i] == 'x' or (n > 0 and m[i] == '0'):
+            continue
+        di = src(-1,m,i,-1) if n > 0 else aro(i)
+        for j in di:
+            if j == i or fx[j] or m[j] == 'x' or (n == -1 and m[j] != '0'):
+                continue
+            if t == 0 and j in hli:
+                continue
+            res.append(exc(m,j,i,di[j]) if n > 0 else [j,j])        
+    return res
+
+def src(n,m,*a):
+    global res
+    if n < 1:
+        s,e = a
+        if (n,s,e) in cache:
+            return cache[(n,s,e)]
+    if n == 1:
+        leaf,p,pk = a
+    cur = m if n > 0 else s
+    q = PriorityQueue() if n > 0 else []
+    mkd = {cur:[cur]}
+    g = {cur:0}
+    def heu(m):
+        ct = 0
+        for i in range(size):
+            if m[i] not in '0x'+('' if p == -1 else pk):
+                y1,x1 = divmod(i,sx)
+                y2,x2 = divmod(leaf.index(m[i]) if p == -1 else p,sx)
+                ct += (abs(y1 - y2) + abs(x1 - x2)) * (1 if p == -1 else -1)
+        if p != -1:
+            r1 = src(-2,m,p,-1)
+            isDead = len(r1) > 1
+            if isDead:
+                for i in range(len(r1)-1,-1,-1):
+                    if m[r1[i]] not in '0' + ('' if i else pk):
+                        ct += 10 * (len(r1) - i if isDead else 1)
+            r2 = src(0,m,m.index(pk),leaf.index(pk))
+            ct += len(r2)
+            ct += 10 * len([i for i in r2 if m[i] not in '0'+pk])
+            li = [i in r1 and m[i] not in '0'+pk for i in r2[1:]]
+            if isDead and li and any(li):
+                ct += 100
+        return ct
+    put = lambda cur: q.put((g[cur] + heu(cur), cur)) if n > 0 else q.append(cur)
+    get = lambda : q.get()[1] if n > 0 else q.pop(0)
+    put(cur)
+    while 1:
+        if n == -2 and len(q) > 1:
+            break
+        if n == -1 and not q:      # default
+            return mkd
+        cur = get()
+        if n == 0 and cur == e:
+            break
+        if n == 1:
+            if (p == -1 and cur == leaf) or (p != -1 and cur[p] == pk):
+                break
+        for i,j in exp(n,cur if n > 0 else m,cur):
+            if i not in mkd:
+                mkd[i] = mkd[cur] + [j]
+                g[i] = g[cur] + 1
+                put(i)
+    res1 = mkd[cur]
+    if n > 0:
+        res += res1[1:]
+        return cur
+    cache[(n,s,e)] = res1
+    return res1
+
+def main(g_t,m,*a):
+    global t,sy,sx,size,fx,fxli,cache,res
+    t = g_t
+    sy,sx = [5,5] if t == 0 else [4,4]
+    size = sy * sx
+    fx = {i:0 for i in range(size)}
+    fxli = lambda li,n: fx.update({i:n for i in li})
+    cache = {}
+    res = []
+    if t == 0:
+        global hli
+        leaf = '1x0x23000450006700089x0xa'
+        hli = [2,12,22]
+        li = [0,4,20,24,5,19,15,9,10,14]
+        for i in li:
+            m = src(1,m,leaf,i,leaf[i])
+            fx[i] = 1
+    if t == 1:
+        leaf = list('1234567800000000')
+        n = m.index('x')
+        leaf.insert(n,'x')
+        leaf = ''.join(leaf[:-1])
+        for i in {5:[1,0,2,3],6:[2,3,1,0],9:[0,1,2,3],10:[0,1,2,3]}[n]:
+            m = src(1,m,leaf,i,leaf[i])
+            fx[i] = 1
+        src(1,m,leaf,-1,-1)
+    if t == 2:
+        global m2
+        m1 = m[:]
+        m2,leaf = a
+        m1 = src(1,m1,leaf,-1,-1)
+        res.append(-1)
+        leaf = ''.join([m1[i] for i in [3,2,1,0,7,6,5,4,11,10,9,8,15,14,13,12]])
+        m2 = src(1,m2,leaf,-1,-1)
+    return res
+
+def ts(ad, val=-1, b=1):
+    ser = serial_open(port = 'COM')
+    if b:
+        ad += 100 * (1 + T)
+    plc = list('00RSS0106%DW'+'%03d'%ad)
+    if val != -1:
+        plc[2] = 'W'
+        plc += '%04x'%val
+    ser.write(bytes([5]+[ord(i) for i in plc]+[4]))
+    wait(0.02)
+    if val == -1:
+        val = int(ser.read(ser.inWaiting()).decode()[10:14], 16)
+    serial_close(ser)
+    return val
+
+tl = lambda *n:tp_log(' '.join(map(str,n)))
+drl_report_line(0)
+set_tool('tool')
+set_velx(1500); set_accx(2500); set_velj([100,150,180,225,225,225]); set_accj(400)
+begin_blend(25)
+ml,mj,aml,amj,mjx = movel,movej,amovel,amovej,movejx
+def up(p,mod=0,h=-1):
+    p,h = p[:],h if h != -1 else 260
+    p[2] = p[2] + h if mod else h
+    return p
+tool = 0
+def cht(t=0.6,n=-1):
+    global tool,pos
+    if n == tool:
+        return
+    tool = (1 - tool)
+    amj([0,0,0,0,0,-180 if tool else 180],a=1500,mod=1)
+    wait(t)
+    pos = poss[tool][T]
+isgrip = 0
+def grip(n):
+    global isgrip
+    isgrip = n
+    if tool:
+        if not n:
+            wait(0.1)
+        ts(40,n,b=0)
+        wait(0.2)
+    else:
+        set_tool_digital_outputs([1,-2] if n else [-1,2])
+        wait(0.25)
+
+def ps(pos,y,x,sy=40,sx=40):
+    s = y * x
+    pos = [pos] * s
+    for i in range(1,s):
+        pos[i] = trans(pos[i-1],[-sx,0,0,0,0,0]) if i % x else trans(pos[i-x],[0,sy,0,0,0,0])
+    return pos
+elcA = ps(posx(428.37, 297.52, 227.5, 179.48, -90, -89.98),5,5)
+elcB = ps(posx(158.53, 338.16, 225.33, 179.57, -90, -90),4,4)
+elcC = [ps(posx(-44.7, 344.55, 225.96, 0.13, -90, -90),4,4),ps(posx(-254.31, 345.14, 225.81, 0.43, -90, -90),4,4)]
+airA = ps(posx(429.06, 299.5, 135.81+60, 179.92, -90.02, 89.98),5,5)
+airB = ps(posx(159.17, 339.68, 134.34+60, 0.36, 90, -90.02),4,4)
+airC = [ps(posx(-44.53, 342.19, 134.73+60, 179.93, 90, -90),4,4),ps(posx(-254.45, 342.95, 134.77+60, 0.03, -90, 90),4,4)]
+poss = [[elcA,elcB,elcC],[airA,airB,airC]]
+
+elcA = [trans(elcA[i],[0,0,-1,0,0,0]) if i in [4,9,14,19,24] else elcA[i] for i in range(25)]        # temp
+elcA = [trans(elcA[i],[0,0,-0.8,0,0,0]) if i in [3,8,13,18,23] else elcA[i] for i in range(25)]        # temp
+elcA = [trans(elcA[i],[0,0,-0.3,0,0,0]) if i in [2,7,12,17,22] else elcA[i] for i in range(25)]        # temp
+airA = [trans(airA[i],[0,0,-1,0,0,0]) if i in [4,9,14,19,24] else airA[i] for i in range(25)]        # temp
+airA = [trans(airA[i],[0,0,-0.8,0,0,0]) if i in [3,8,13,18,23] else airA[i] for i in range(25)]        # temp
+airA = [trans(airA[i],[0,0,-0.3,0,0,0]) if i in [2,7,12,17,22] else airA[i] for i in range(25)]        # temp
+
+c2=0
+def mt1(n,p,pk,add=0):
+    li = [[1,2,3,4,5,6],[7,8,9,10]] if T == 0 else [[],[5,6,7,8]] if T == 1 else [[1,2,3],[4,5]]
+    z = 0 if not tool else 20 if pk in li[0] else 10 if pk in li[1] else 0
+    tp = trans((pos[c2] if T == 2 else pos)[p],[0,0,-z-(0.15 if not n and tool else 0),0,0,0])
+    mod,h = [0,-1] if n == 1 else [1,3]
+    ml(up(tp,mod,h),a = 2500 + add)
+    if n < 2:
+        ml(tp,a=2500 if n else 800,r=3)
+        grip(n)
+        ts(p + (16 if T == 2 and c2 else 0),0 if n else pk)
+        mod,h = [1,3] if n else [0,-1]
+        ml(up(tp,mod,h),a=800 if n else 2500)
+
+def Run():
+    global c2    
+    for i in range(len(res)):
+        if res[i] == -1:
+            c2 = 1
+            continue
+        r,pk = res[i]
+        n = len(r)
+        li = [r[1]-r[0]]
+        ct = 0      # temp
+        cht(n = [pk in [4,5,6,7,8],-1,(int(pk)%2)+c2][T])
+        mt1(1,r[0],pk)
+        for i in range(1,n):
+            if i < n - 1:
+                dire = r[i+1] - r[i]
+                skip = li[i - 1] == dire
+                li.append(dire)
+                if skip:
+                    ct += 1      # temp
+                    continue
+            mt1(1 if not i else 0 if i == n-1 else 2,r[i],pk,1000 * ct)
+            ct = 0      # temp
+
+def wt_init():
+    global T
+    for T in range(3):
+        li = [[2, 19, 20, 19, 10, 7, 0, 0, 0, 8, 9, 0, 20, 0, 4, 6, 0, 0, 0, 1, 5, 19, 20, 19, 3],
+              [0, 0, 0, 0, 0, 5, 0, 8, 0, 7, 9, 1, 6, 3, 4, 2],
+              [1, 0, 3, 0, 0, 9, 0, 4, 0, 2, 0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 4, 2, 9, 5, 1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0, 0, 5, 1, 2, 3, 4]][T]
+        for ad,val in enumerate(li):
+            ts(ad,val)
+wt_init()       # temp
+
+ts(30,1,b=False)        # buzz
+import time         # temp
+time_start = time.time()        # temp
+
+def rd(ad):
+    di = {10:'a',19:'x',20:'0'} if not T else {9:'x'}
+    li = [ts(i) for i in range(ad,ad+(25 if T == 0 else 16))]
+    return ''.join([di[i] if i in di else str(i) for i in li])
+    
+root,leaf = [-1]*3,[-1]*3
+for T in range(3):
+    root[T] = rd(0)
+    if T == 2:
+        root[T] = [rd(0),rd(16)]
+        leaf[T] = rd(32)
+        
+ress = [
+[[[5, 6, 7, 8, 13, 18], 7], [[0, 5, 6, 11, 16, 17], 2], [[9, 8, 13], 8], [[14, 9, 8, 7, 6, 11, 16], 4], [[19, 14, 9, 8, 7, 6, 5, 0], 1], [[4, 9, 8, 7, 6, 11], 10], [[13, 8, 7, 6, 5], 8], [[18, 13, 8, 7, 6], 7], [[17, 18, 13, 8, 9, 4], 2], [[16, 17, 18, 13, 8, 9], 4], [[15, 16, 17, 18, 13, 14], 6], [[20, 15, 16, 17, 18, 13, 8], 5], [[10, 15, 20], 9], [[24, 19, 18, 17, 16, 15, 10], 3], [[11, 16, 17, 18, 19, 24], 10], [[6, 11, 16, 17, 18, 19], 7], [[5, 6, 11, 16, 17, 18], 8], [[8, 7, 6, 11, 16, 17], 5], [[10, 5], 3], [[14, 13, 8, 7, 6, 11, 10], 6], [[19, 14, 13, 8, 7, 6], 7], [[17, 16, 15], 5], [[9, 8, 7], 4], [[18, 19], 8], [[15, 16, 17, 18, 13, 8, 9], 5], [[10, 11, 16, 17, 18, 13, 14], 6], [[6, 11, 16, 15], 7], [[9, 8, 13, 18, 17, 16], 5], [[14, 13, 18, 17], 6], [[7, 8, 9], 4], [[16, 11, 10], 5], [[17, 18, 13, 14], 6]],
+[[[7, 6], 8], [[11, 7, 3, 2, 1, 0], 1], [[15, 11, 7, 3, 2, 1], 2], [[6, 7, 11, 15], 8], [[5, 4, 8], 5], [[9, 5, 6, 7, 11], 7], [[13, 9, 5, 6, 2], 3], [[14, 13, 9, 5, 6, 7, 3], 4], [[12, 13, 9, 5], 6], [[11, 7, 6], 7], [[15, 11, 7], 8], [[8, 4], 5]],
+[[[0, 4, 8, 12], 1], [[2, 6, 10, 14], 3], [[9, 13], 2], [[15, 11, 10], 5], [[7, 11, 15], 4], [[10, 11], 5], -1, [[8, 12, 13, 14, 15], 1], [[7, 11, 10, 14, 13, 12, 8], 5], [[4, 0, 1, 2, 3, 7, 11, 10, 14, 13, 12], 4], [[5, 1, 2, 3, 7, 11, 10, 14], 2], [[9, 13], 3]]]
+#ress = []
+#for i in range(3):
+    #if i == 2:
+        #r1,r2 = root[i]
+        #ress.append(main(i,r1,r2,leaf[i]))
+    #else:
+        #ress.append(main(i,root[i]))
+    #tl(i,'done !!!')        # temp
+
+for T in range(3):
+    grip(0)
+    if T == 0:
+        mj([90,0,90,90,-90,0])
+        tool = 0
+    if T == 2:
+        aml([0,0,100,0,0,0],mod=1)
+        mj([0,0,0,0,1,0],mod=1)
+        mjx(up(poss[tool][2][0][5],0,350),sol=2)
+    pos,res = poss[tool][T],ress[T]
+    Run()
+    
+ts(30,1,b=False)        # buzz
+time_end = time.time() - time_start         # temp
+minute,second = int(time_end // 60),int(time_end % 60)         # temp
+tl('{}m {}s\n'.format(minute,second))         # temp

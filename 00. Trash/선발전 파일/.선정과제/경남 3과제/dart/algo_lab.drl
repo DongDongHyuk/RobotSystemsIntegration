@@ -1,0 +1,179 @@
+from queue import PriorityQueue
+from collections import deque
+
+def exc1(m,s,e,r):
+    m = list(m)
+    m[s],m[e] = m[e],m[s]
+    info = [r,int(m[s])]
+    return [''.join(m),info]
+
+def exc2(m,n,p,pk):      # 변형 : 그리퍼 2개 사용
+    m = list(m)
+    m[p] = '0' if n else pk
+    info = [n,p,int(pk)]
+    return [''.join(m),info]
+
+def aro(pos):
+    if pos in cache:
+        return cache[pos]
+    res = []
+    dy,dx = [-1,0,1,0],[0,1,0,-1]
+    y,x = divmod(pos,sx)
+    for i in range(4):
+        ny,nx = y + dy[i],x + dx[i]
+        if -1 < ny < sy and -1 < nx < sx:
+            res.append(ny * sx + nx)
+    cache[pos] = res
+    return res
+
+def exp(n,m,p=-1):
+    res = []
+    if t==1 and Ct==0:      # 변형 : 그리퍼 2개 사용
+        for i in range(si):
+            if ((m[i] in Pk1 and all([i in m for i in Pk1])) or (m[i] in Pk2 and all([i in m for i in Pk2]))) and m[i] not in '0x':
+                res.append(exc2(m,1,i,m[i]))
+            if m[i] == '0':
+                for pk in Pk1+Pk2:
+                    if pk not in m:
+                        res.append(exc2(m,0,i,pk))
+        return res
+    di1,di2 = {},{}
+    for i in range(si):
+        if not fx[i] and m[i] != 'x':
+            if n < 1 or m[i] != '0':
+                di1[i] = i
+            if n < 1 or m[i] == '0':
+                di2[i] = i
+    for i in di1 if n > 0 else [p]:
+        q = deque([i])
+        r = {i:[di1[i]]}
+        while q:
+            cur = q.popleft()
+            for j in range(si) if t == 1 else aro(cur):
+                if j in r or j not in di2:
+                    continue
+                if n > 0:
+                    q.append(j)
+                r[j] = r[cur] + [di2[j]]
+                if t == 0 and n > 0 and j in hli:       # hole
+                    continue
+                res.append(exc1(m,di2[j],di1[i],r[j]) if n > 0 else [j,j])
+    return res
+
+visited = 0
+def src(n,m,*a):
+    global res
+    global visited       # temp
+    if n < 1:
+        s,e = a
+        if n == 0 and (n,s,e) in cache:
+            return cache[n,s,e]
+    if n == 1:
+        leaf,p,pk = a
+    if n == 2:
+        leaf, =a
+    cur = m if n > 0 else s
+    q = PriorityQueue() if n > 0 else deque([])
+    mkd = {cur:[cur]}
+    g = {cur:0}    
+    def heu1(m):
+        ct = 0
+        if p != -1:
+            rp = len([i for i in src(0,m,m.index(pk),p) if m[i] not in '0'+pk])
+            ct += 10000 * rp
+            r2 = src(-1,m,p,-1)
+            isDead = len(r2) > 1
+        for i in range(si):
+            if m[i] not in '0x':
+                y1,x1 = divmod(i,sx)
+                y2,x2 = divmod(p if p!=-1 else leaf.index(m[i]),sx)
+                dst = abs(y1 - y2) + abs(x1 - x2)
+                ct += (100 * (si - dst) if isDead and i in r2 else -dst) if p != -1 else dst
+        if p != -1 and not rp:
+            ct = -2 ** (30 if m[p] == pk else 20)
+        return ct
+    def heu2(m):
+        ct = 0
+        for pk in [i for i in leaf if i != '0']:
+            if pk in m:
+                for i in range(1,8):
+                    if m[(m.index(pk)+i)%8] == leaf[(leaf.index(pk)+i)%8] != '0':
+                        ct -= 100
+        return ct
+    put = lambda cur: q.put((g[cur] + (heu2 if n == 2 else heu1)(cur), cur)) if n > 0 else q.append(cur)
+    get = lambda : q.get()[1] if n > 0 else q.popleft()
+    put(cur)
+    while 1:
+        if n == -1 and len(q) > 1:      # default
+            break
+        cur = get()
+        if n > 0:      # temp
+            visited += 1
+        if n == -2 and m[cur] != '0' and cur not in e:
+            break
+        if n == 0 and cur == e:
+            break
+        if n == 1:
+            if (p == -1 and cur == leaf) or (p != -1 and cur[p] == pk):
+                break
+        if n == 2:
+            ct = 8 - Ct
+            H = -100 * ((ct-1)*ct)
+            if heu2(cur) == H:       # -100 * (팩 개수 - 1 * 팩 개수)
+                break
+        for i,j in exp(n,cur if n > 0 else m,cur):
+            if i not in mkd:
+                mkd[i] = mkd[cur] + [j]
+                g[i] = g[cur] + 1
+                put(i)
+    res1 = mkd[cur]
+    if n > 0:
+        res += res1[1:]
+        return cur
+    if n == 0:
+        cache[n,s,e] = res1
+    return res1
+
+def main(g_t,m,*a):
+    global t,sy,sx,si,fx,fxli,cache,res
+    t = g_t
+    sy,sx = [[3,4],[1,8]][t]
+    si = sy * sx
+    fx = {i:0 for i in range(si)}
+    fxli = lambda li,n: fx.update({i:n for i in li})
+    cache = {}
+    res = []
+    if t == 0:
+        global hli      # hole
+        leaf = a[0]
+        hli = a[1] if len(a)==2 else []      # hole
+        seq = [0,1,2,3,4,5]
+        xli = [i for i in range(12) if m[i] == 'x']
+        if xli:
+            seq = [[0,1,2,3,4],[0,1,2,3,4],[0,1,2,3,4],[0,1,2,3,4],
+                   [0,8,1,5,9],[4,8,0],[7,3,11],[3,11,2,6,10],
+                   [8,9,10,11,4],[8,9,10,11,4],[8,9,10,11,4],[8,9,10,11,4]][xli[0]]
+        seq = [i for i in seq if i not in xli + hli]              # hole
+        hd,hdr = [],{}
+        leaf1 = list(leaf[:])
+        for i in seq:
+            pk = leaf1[i]
+            if pk == '0':
+                r = src(-2,leaf1,i,hd)
+                pk = leaf1[r[-1]]
+                hd.append(i)
+                hdr[i] = r
+                leaf1[r[-1]],leaf1[i] = '0',pk
+            m = src(1,m,''.join(leaf1),i,pk)
+            fx[i] = 1
+        m = src(1,m,''.join(leaf1),-1,-1)
+        for i in hd[::-1]:
+            res.append([hdr[i],int(m[i])])
+    if t == 1:
+        global Ct,Pk1,Pk2
+        leaf,=a
+        Ct = leaf.count('0')        # 빈 칸 개수
+        St = sorted([i for i in '12345678' if i in leaf],key=int)
+        Pk1,Pk2 = St[:-4],St[-4:]       # 사각팩, 원형팩
+        src(2,m,leaf)
+    return res

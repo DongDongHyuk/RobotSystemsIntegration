@@ -1,0 +1,359 @@
+from queue import PriorityQueue
+
+def exc(m,s,e,r):
+    m = list(m)
+    m[s],m[e] = m[e],m[s]
+    info = [r,int(m[s])]
+    return [''.join(m),info]
+
+def aro(pos):
+    if pos in cache:
+        return cache[pos]
+    res = []
+    dy,dx = [-1,0,1,0],[0,1,0,-1]
+    y,x = divmod(pos,sx)
+    for i in range(4):
+        ny,nx = y + dy[i],x + dx[i]
+        if -1 < ny < sy and -1 < nx < sx:
+            res.append(ny * sx + nx)
+    cache[pos] = res
+    return res
+
+def exp(n,m,p=-1):
+    res = []
+    for i in range(size) if n > 0 else [p]:
+        if fx[i] or m[i] == 'x' or (n > 0 and m[i] == '0'):
+            continue
+        di = src(-1,m,i,-1) if n > 0 else aro(i)
+        for j in di:
+            if j == i or fx[j] or m[j] == 'x' or (n == -1 and m[j] != '0'):
+                continue
+            res.append(exc(m,j,i,di[j]) if n > 0 else [j,j])        
+    return res
+
+def src(n,m,*a):
+    global res
+    if n < 1:
+        s,e = a
+        if n in [0,-2] and (n,s,e) in cache:
+            return cache[(n,s,e)]
+    if n == 1:
+        leaf,p,pk = a
+    if n == 2:
+        p,li = a
+    cur = m if n > 0 else s
+    q = PriorityQueue() if n > 0 else []
+    mkd = {cur:[cur]}
+    g = {cur:0}
+    def heu(m):
+        ct = 0
+        if n == 2:
+            for i in range(size):
+                if m[i] not in  '0x':
+                    y1,x1 = divmod(i,sx)
+                    y2,x2 = divmod(p,sx)
+                    ct -= (abs(y1-y2) + abs(x1-x2))
+            ct -= 10 * len([i for i in li if m[i] != '0'])
+            return ct
+        if p != -1:
+            e = p
+            di = {}
+            for i in range(size):
+                if m[i] == pk and not fx[i]:
+                    di[i] = len([i for i in src(0,m,i,e) if m[i] not in '0'+pk])            
+            s = min(di,key=lambda n:di[n])
+            rp = di[s]            
+            ct += 10000 * rp
+            r2 = src(-2,m,p,-1)
+            isDead = len(r2) > 1
+        used = []
+        for i in range(size):
+            if m[i] not in '0x':
+                y1,x1 = divmod(i,sx)
+                if p == -1:
+                    p1 = [j for j in range(25) if j not in used and leaf[j] == m[i]][0]
+                    used.append(p1)
+                    y2,x2 = divmod(p1,sx)
+                else:
+                    y2,x2 = divmod(p,sx)
+                dst = (abs(y1 - y2) + abs(x1 - x2)) + 1
+                ct += (100 * (size - dst) if isDead and i in r2 else -dst) if p != -1 else dst
+        if p != -1 and not rp:
+            ct = -2 ** (30 if m[p] == pk else 20)        
+        return ct
+    put = lambda cur: q.put((g[cur] + heu(cur), cur)) if n > 0 else q.append(cur)
+    get = lambda : q.get()[1] if n > 0 else q.pop(0)
+    put(cur)
+    while 1:
+        if n == -2 and len(q) > 1:      # default
+            break
+        if n in [0,-1] and not q:      # default
+            return mkd
+        cur = get()
+        if n == -3 and m[cur] != '0' and cur not in e:
+            break
+        if n == 0 and cur == e:
+            break
+        if n == 1:
+            if (p == -1 and cur == leaf) or (p != -1 and cur[p] == pk):
+                break
+        if n == 2 and all([cur[i] != '0' for i in li]):
+            break
+        for i,j in exp(n,cur if n > 0 else m,cur):
+            if i not in mkd:
+                mkd[i] = mkd[cur] + [j]
+                g[i] = g[cur] + 1
+                put(i)
+    res1 = mkd[cur]
+    if n > 0:
+        res += res1[1:]
+        return cur
+    if n in [0,-2]:
+        cache[(n,s,e)] = res1
+    return res1
+
+def main(g_t,m,*a,mod=0):
+    global t,sy,sx,size,fx,fxli,cache,res
+    t = g_t
+    sy,sx = [4,4] if t < 2 else [5,5]
+    size = sy * sx
+    fx = {i:0 for i in range(size)}
+    fxli = lambda li,n: fx.update({i:n for i in li})
+    cache = {}
+    res = []
+    if t < 2:
+        ptr,=a
+        ptr = ptr[0]
+        m = src(1,m,-1,ptr,'1')
+        res.append(-1)
+        m = list(m)
+        m[m.index('1')] = '0'
+        for i in range(4):
+            di = {i:src(-1,m,i,-1) for i in range(16) if m[i] not in '01x'}
+            li = min([di[i][ptr] for i in di if ptr in di[i]],key=len)
+            res.append([li,int(m[li[0]])])
+            m[li[0]] = '0'
+    if t == 2:
+        if mod == 0:
+            ptr,=a
+            for i in range(2):
+                di = src(-1,m,ptr[i],-1)
+                li = [di[i] for i in sorted(di,key=lambda n:len(di[n]))][:4]
+                fxli([i[-1] for i in li],1)
+                res.append(li[:4][::-1])
+        if mod == 1:
+            li = [i for i in range(25) if m[i] == '2']
+            fxli(li,1)
+            for i in range(2):
+                p = li[i]
+                m = src(2,m,p,aro(p))
+                m = list(m)
+                m[i] = '0'
+                m = ''.join(m)
+                fx[i] = 0
+                res.append(-1)
+        if mod == 2:
+            leaf,=a
+            li = []
+            while len(li) < 11:
+                li1 = [i for i in range(25) if m[i] != 'x' and not fx[i] and i not in li]
+                li.append(min(li1,key = lambda n:len(exp(0,m,n))))
+                fxli(li,1)
+            fxli(li,0)
+            hd,hdr = [],{}
+            leaf1 = list(leaf[:])
+            for i in li:
+                pk = leaf1[i]
+                if pk == '0':
+                    r = src(-3,leaf1,i,hd)
+                    pk = leaf1[r[-1]]
+                    hd.append(i)
+                    hdr[i] = r
+                    leaf1[r[-1]],leaf1[i] = '0',pk
+                m = src(1,m,''.join(leaf1),i,pk)
+                fx[i] = 1
+            m = src(1,m,''.join(leaf1),-1,-1)
+            for i in hd[::-1]:
+                res.append([hdr[i],int(m[i])])
+    return res
+    
+def ts(ad,val=[],y=1,x=1):
+    ser = serial_open(port='COM')
+    plc =  list('00RSB06%DW'+'%03d'%ad)
+    plc += [i for i in '{:02X}'.format(y*x)]
+    if val != []:
+        plc[2] = 'W'
+        plc += '%04X'%(val&0xFFFF)
+    ser.write([5]+[ord(i) for i in plc]+[4])
+    wait(0.05 if val == [] else 0.02)
+    if val == []:
+        plc = ser.read(ser.inWaiting()).decode()
+        val = [int(plc[10+i:14+i],16) for i in range(0, y*x*4,4)]
+    serial_close(ser)
+    return val[0] if type(val) != int and len(val) == 1 else val
+
+tl = lambda *n:tp_log(' '.join(map(str,n)))
+drl_report_line(0)
+set_tool('tool')
+set_velx(1500); set_accx(2500); set_velj([100,150,180,225,225,225]); set_accj(400)
+begin_blend(25)
+ml,mj,aml,amj,mjx = movel,movej,amovel,amovej,movejx
+H = 320
+def up(p,mod=0,h=-1):
+    p,h = p[:],h if h != -1 else H
+    p[2] = p[2] + h if mod else h
+    return p
+tool = 0
+def cht(n=-1,t=0.6):
+    global tool
+    if n == tool:
+        return
+    tool = (1 - tool)
+    amj([0,0,0,0,0,-180 if tool else 180],a=1500,mod=1)
+    wait(t)
+isgrip = 0
+def grip(n):
+    global isgrip
+    isgrip = n
+    if tool:
+        if not n:
+            wait(0.1)
+        ts(40,n)
+        wait(0.2)
+    else:
+        set_tool_digital_outputs([1,-2] if n else [-1,2])
+        wait(0.25)
+
+def ps(p,ad,y,x,sy=40,sx=40):
+    pos = {}
+    for i in range(y * x):
+        pos[i] = [trans(p[j],[-sx*(i%x),sy*(i//x),0,0,0,0]) for j in [0,1]] + [ad + i]
+    return pos
+A = ps([posx(447.16, 263.2, 228.87, 179.67, -90.03, -90.01),posx(448, 265.12, 137.1+60, 179.44, -90, 90)],100,4,4)
+B = ps([posx(-325.6, 262.72, 228.63, 0.55, -90, -90),posx(-326.05, 260.89, 137.06+60, 179.57, 90.01, -89.99)],200,4,4)
+C = ps([posx(113.76, 440.93, 229.26, 179.87, 89.97, 90.05),posx(113.91, 440.05, 137.59+60, 179.58, 90, -90)],300,5,5)
+C1 = ps([posx(-185.93, 441.62, 229.3, 0.26, -90.01, -89.99),posx(-185.94, 441.1, 138.4+60, 0.21, -90, 90)],350,2,2)
+
+def z(pk):
+    li = [[1,3],[4]]
+    return 0 if not tool else 20 if pk in li[0] else 10 if pk in li[1] else 0 
+    
+def mt1(pos,n,p,pk,mh=[],add=0):
+    cht(pk < 3)
+    tp = trans(pos[p][tool],[0,0,-z(pk)-(0.15 if not n and tool else 0),0,0,0])
+    mod,h = mh if mh else [0,H] if n == 1 else [1,3]
+    ml(up(tp,mod,h),a = 2500 + add)
+    if n < 2:
+        ml(tp,a=2500 if n else 800,r=3)
+        grip(n)
+        ts(pos[p][2],0 if n else pk)        
+        mod,h = mh if mh else [1,3] if n else [0,H]
+        ml(up(tp,mod,h),a=800 if n else 2500)
+
+def Run(pos,res):
+    cht(0)
+    for i in range(len(res)):
+        r,pk = res[i]
+        n = len(r)
+        li = [r[1]-r[0]]
+        ct = 0
+        mt1(pos,1,r[0],pk)
+        for i in range(1,n):
+            if i < n - 1:
+                dire = r[i+1] - r[i]
+                skip = li[i - 1] == dire
+                li.append(dire)
+                if skip:
+                    ct += 1
+                    continue
+            mt1(pos,0 if i == n-1 else 2,r[i],pk,add=1000 * ct)
+            ct = 0
+
+def wt_init():
+    for i in range(3):
+        li = [[9,0,4,0,0,0,9,0,5,10,0,5,0,0,4,1],
+              [4,0,0,5,0,11,0,0,0,5,1,9,9,0,0,4],
+              [9,0,0,0,9,0,0,2,0,0,10,0,0,0,0,0,0,2,0,0,11,0,0,0,0,9,0,5,0,9,0,4,5,4,0,0,3,4,0,0,5,5,5,0,3,0,4,5,0,0,3,5,5,3]][i]
+        for ad,val in enumerate(li):
+            ts((100*(1+i))+ad,val)
+wt_init()       # temp
+
+#ts(30,1)        # buzz
+import time         # temp
+time_start = time.time()        # temp
+
+def cvt(li):
+    di = {9:'x',10:'0',11:'0'}
+    return ''.join([di[i] if i in di else str(i) for i in li])
+root,leaf,info = [-1]*4,[-1]*4,[-1]*4
+for i in range(3):
+    y,x = [4,4] if i < 2 else [5,5]
+    li = ts([100,200,300][i],[],y,x)
+    info[i] = [i for i in range(y*x) if li[i] > 9]
+    root[i] = cvt(li)
+leaf[2] = cvt(ts(325,[],5,5))
+c1 = ts(350,[],2,2)
+
+ress = [-1,-1,-1]
+ress[0] = main(0,root[0],info[0])
+ress[1] = main(1,root[1],info[1])
+ress[2] = main(2,root[2],info[2],mod=0)
+
+grip(0)
+mj([90,0,90,90,-90,0])
+
+# A,B -> C
+for i in range(2):
+    pos = [A,B][i]
+    ptr1,ptr2 = info[i][0],info[2][i]
+    res1,res2 = ress[i],ress[2][i]
+    n = res1.index(-1)
+    Run(pos,res1[:n])
+    res1 = res1[n+1:]
+    for j in range(4):
+        r1,pk = res1[j]
+        r2 = res2[j]            
+        for k in range(len(r1)-1):
+            mt1(pos,2 if k else 1,r1[k],pk)
+        li = [0,0,40,0,0,0]
+        ml(li,mod=1)
+        ml(up(pos[ptr1][0],1,43))
+        ml(up(pos[ptr1][0]))
+        if not i:
+            mj([90,0,90,90,90,0])
+        ml(up(C[ptr2][0]))
+        for k in range(len(r2)):
+            mt1(C,0 if k == len(r2)-1 else 2,r2[k],pk)            
+        if not i and j < 3:
+            mj([90,0,90,90,-90,0])
+    
+# C1 -> C
+res = main(2,cvt(ts(300,[],5,5)),mod=1)
+n = res.index(-1)
+res1,res2 = res[:n],res[n+1:-1]
+for i in range(2):
+    res = [res1,res2][i]
+    Run(C,res)
+    p1,p2 = ts(300,[],5,5).index(2),ts(350,[],2,2).index(5)
+    mt1(C,1,p1,2,[0,-1])
+    mt1(C1,1,p2,5,[0,-1])
+    mt1(C1,0,p2,2,[0,-1])
+    mt1(C,0,p1,5,[0,-1])
+    
+# A,B -> C
+mj([90,0,90,90,-90,0])
+for i in range(2):
+    p1,p2,p3 = ts([100,200][i],[],4,4).index(1),ts(350,[],2,2).index(3),ts(300,[],5,5).index(0)
+    mt1([A,B][i],1,p1,1,[0,-1])
+    mj([90,0,90,90,90,-180])
+    mt1(C1,1,p2,3,[0,-1])
+    mt1(C1,0,p2,1,[0,-1])
+    mt1(C,0,p3,3,[0,-1])
+
+res = main(2,cvt(ts(300,[],5,5)),leaf[2],mod=2)
+Run(C,res)
+
+#ts(30,1)        # buzz
+time_end = time.time() - time_start         # temp
+minute,second = int(time_end // 60),int(time_end % 60)         # temp
+tl('{}m {}s\n'.format(minute,second))         # temp
