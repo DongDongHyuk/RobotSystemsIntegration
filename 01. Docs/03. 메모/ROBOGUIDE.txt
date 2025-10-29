@@ -1,5 +1,17 @@
-그리퍼 동작은 시뮬레이션다 만들고 ㄱㄱ
-그리퍼 만들면 기존 그리퍼 관련 설정들 전부 초기화가 됨
+DIV : 나머지
+MOD : 몫
+IF JUMP LABEL       조건 처리
+
+To - do
+[ O ] 프로그램 최적화 - FOR, Register, Position Register,  
+[ X ] 마킹스킴 익히기
+[ X ] 취급 설명서
+[ X ] 삼성 지원서 제출
 
 
-
+idea
+- UFRAME(UFRAM_NUM=1)
+- Auto Save
+- Palletizing Register
+- IF
+- For int = int to int
